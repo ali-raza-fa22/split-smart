@@ -60,11 +60,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading messages: $e')));
-      }
+      // Handle error silently
     }
   }
 
@@ -72,7 +68,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     try {
       await _chatService.markMessagesAsRead(widget.otherUserId);
     } catch (e) {
-      debugPrint('Error marking messages as read: $e');
+      // Handle error silently
     }
   }
 

@@ -45,8 +45,11 @@ class ChatService {
         {
           'group_id': groupId,
           'user_id': _supabase.auth.currentUser!.id,
+          'is_admin': true,
         }, // Add creator
-        ...memberIds.map((id) => {'group_id': groupId, 'user_id': id}),
+        ...memberIds.map(
+          (id) => {'group_id': groupId, 'user_id': id, 'is_admin': false},
+        ),
       ];
 
       await _supabase.from('group_members').insert(members);
@@ -74,11 +77,40 @@ class ChatService {
   // Get group members
   Future<List<Map<String, dynamic>>> getGroupMembers(String groupId) async {
     try {
-      final response = await _supabase
+      // First get group members
+      final membersResponse = await _supabase
           .from('group_members')
-          .select('*, profiles!inner(*)')
+          .select('*')
           .eq('group_id', groupId);
-      return List<Map<String, dynamic>>.from(response);
+
+      if (membersResponse.isEmpty) {
+        return [];
+      }
+
+      // Get user IDs from members
+      final userIds =
+          membersResponse.map((member) => member['user_id']).toList();
+
+      // Get profiles for these users
+      final profilesResponse = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds);
+
+      // Create a map of user_id to profile
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profilesResponse) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      // Combine members with their profiles
+      final result = <Map<String, dynamic>>[];
+      for (final member in membersResponse) {
+        final profile = profilesMap[member['user_id']];
+        result.add({...member, 'profiles': profile ?? {}});
+      }
+
+      return result;
     } catch (e) {
       rethrow;
     }
@@ -87,12 +119,44 @@ class ChatService {
   // Get group chat history
   Future<List<Map<String, dynamic>>> getGroupChatHistory(String groupId) async {
     try {
-      final response = await _supabase
+      // First get group messages
+      final messagesResponse = await _supabase
           .from('group_messages')
-          .select('*, profiles!inner(*)')
+          .select('*')
           .eq('group_id', groupId)
           .order('created_at', ascending: true);
-      return List<Map<String, dynamic>>.from(response);
+
+      if (messagesResponse.isEmpty) {
+        return [];
+      }
+
+      // Get sender IDs from messages
+      final senderIds =
+          messagesResponse
+              .map((message) => message['sender_id'])
+              .toSet()
+              .toList();
+
+      // Get profiles for these senders
+      final profilesResponse = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', senderIds);
+
+      // Create a map of sender_id to profile
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profilesResponse) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      // Combine messages with their sender profiles
+      final result = <Map<String, dynamic>>[];
+      for (final message in messagesResponse) {
+        final profile = profilesMap[message['sender_id']];
+        result.add({...message, 'profiles': profile ?? {}});
+      }
+
+      return result;
     } catch (e) {
       rethrow;
     }
@@ -104,12 +168,17 @@ class ChatService {
     required String content,
   }) async {
     try {
+      final timestamp = DateTime.now().toIso8601String();
+
       await _supabase.from('group_messages').insert({
         'group_id': groupId,
         'sender_id': _supabase.auth.currentUser!.id,
         'content': content,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': timestamp,
       });
+
+      // Small delay to ensure database has processed the insert
+      await Future.delayed(const Duration(milliseconds: 100));
     } catch (e) {
       rethrow;
     }
@@ -177,14 +246,22 @@ class ChatService {
     }
   }
 
-  // Subscribe to group messages
+  // Subscribe to group messages with real-time updates
   Stream<List<Map<String, dynamic>>> subscribeToGroupMessages(String groupId) {
+    // Use a different stream configuration that should work better
     return _supabase
         .from('group_messages')
         .stream(primaryKey: ['id'])
         .eq('group_id', groupId)
         .order('created_at', ascending: true)
-        .map((rows) => rows);
+        .map((rows) {
+          final messages =
+              rows.map((row) => Map<String, dynamic>.from(row)).toList();
+          return messages;
+        })
+        .handleError((error) {
+          return <Map<String, dynamic>>[];
+        });
   }
 
   // Subscribe to direct messages
@@ -197,5 +274,324 @@ class ChatService {
         // .or('sender_id.eq.$otherUserId,receiver_id.eq.$otherUserId')
         .order('created_at', ascending: true)
         .map((rows) => rows);
+  }
+
+  // Check if current user is admin of a group
+  Future<bool> isGroupAdmin(String groupId) async {
+    try {
+      final response =
+          await _supabase
+              .from('group_members')
+              .select('is_admin')
+              .eq('group_id', groupId)
+              .eq('user_id', _supabase.auth.currentUser!.id)
+              .single();
+      return response['is_admin'] ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Add member to group (admin only)
+  Future<void> addMemberToGroup({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      // Check if current user is admin
+      final isAdmin = await isGroupAdmin(groupId);
+      if (!isAdmin) {
+        throw Exception('Only admins can add members to the group');
+      }
+
+      // Check if group already has 5 members
+      final currentMembers = await getGroupMembers(groupId);
+      if (currentMembers.length >= 5) {
+        throw Exception('Group already has maximum 5 members');
+      }
+
+      // Check if user is already a member
+      final isAlreadyMember = currentMembers.any(
+        (member) => member['user_id'] == userId,
+      );
+      if (isAlreadyMember) {
+        throw Exception('User is already a member of this group');
+      }
+
+      await _supabase.from('group_members').insert({
+        'group_id': groupId,
+        'user_id': userId,
+        'is_admin': false,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Remove member from group (admin only)
+  Future<void> removeMemberFromGroup({
+    required String groupId,
+    required String userId,
+  }) async {
+    try {
+      // Check if current user is admin
+      final isAdmin = await isGroupAdmin(groupId);
+      if (!isAdmin) {
+        throw Exception('Only admins can remove members from the group');
+      }
+
+      // Prevent admin from removing themselves
+      if (userId == _supabase.auth.currentUser!.id) {
+        throw Exception('Admin cannot remove themselves from the group');
+      }
+
+      await _supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Rename group (admin only)
+  Future<void> renameGroup({
+    required String groupId,
+    required String newName,
+  }) async {
+    try {
+      // Check if current user is admin
+      final isAdmin = await isGroupAdmin(groupId);
+      if (!isAdmin) {
+        throw Exception('Only admins can rename the group');
+      }
+
+      if (newName.trim().isEmpty) {
+        throw Exception('Group name cannot be empty');
+      }
+
+      await _supabase
+          .from('groups')
+          .update({'name': newName.trim()})
+          .eq('id', groupId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Test if user can send messages to group (for debugging RLS policies)
+  Future<bool> canSendMessageToGroup(String groupId) async {
+    try {
+      // Check if user is a member of the group
+      final response =
+          await _supabase
+              .from('group_members')
+              .select('id')
+              .eq('group_id', groupId)
+              .eq('user_id', _supabase.auth.currentUser!.id)
+              .single();
+      return response.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Get available users to add to group (users not already in the group)
+  Future<List<Map<String, dynamic>>> getAvailableUsersForGroup(
+    String groupId,
+  ) async {
+    try {
+      final currentMembers = await getGroupMembers(groupId);
+      final currentMemberIds =
+          currentMembers.map((member) => member['user_id']).toList();
+
+      final allUsers = await getUsers();
+      return allUsers
+          .where((user) => !currentMemberIds.contains(user['id']))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Debug method to test message sending and receiving
+  Future<Map<String, dynamic>> testMessageFlow(String groupId) async {
+    try {
+      // Test sending a message
+      await sendGroupMessage(
+        groupId: groupId,
+        content: 'Test message ${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      // Test getting messages
+      final messages = await getGroupChatHistory(groupId);
+
+      // Test getting members
+      final members = await getGroupMembers(groupId);
+
+      return {
+        'success': true,
+        'message_sent': true,
+        'messages_count': messages.length,
+        'members_count': members.length,
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    }
+  }
+
+  // Simple test to check if tables exist and are accessible
+  Future<String> testTableAccess() async {
+    try {
+      // Test each table individually
+      await _supabase.from('profiles').select('count').limit(1);
+      await _supabase.from('groups').select('count').limit(1);
+      await _supabase.from('group_members').select('count').limit(1);
+      await _supabase.from('group_messages').select('count').limit(1);
+
+      return 'All tables are accessible';
+    } catch (e) {
+      return 'Error: $e';
+    }
+  }
+
+  // Debug method to test database connectivity and table existence
+  Future<Map<String, dynamic>> debugDatabaseConnection() async {
+    try {
+      // Test profiles table
+      final profilesTest = await _supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
+
+      // Test groups table
+      final groupsTest = await _supabase
+          .from('groups')
+          .select('count')
+          .limit(1);
+
+      // Test group_members table
+      final groupMembersTest = await _supabase
+          .from('group_members')
+          .select('count')
+          .limit(1);
+
+      // Test group_messages table
+      final groupMessagesTest = await _supabase
+          .from('group_messages')
+          .select('count')
+          .limit(1);
+
+      return {
+        'profiles': profilesTest.isNotEmpty,
+        'groups': groupsTest.isNotEmpty,
+        'group_members': groupMembersTest.isNotEmpty,
+        'group_messages': groupMessagesTest.isNotEmpty,
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    } catch (e) {
+      return {
+        'error': e.toString(),
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    }
+  }
+
+  // Test real-time subscription
+  Stream<List<Map<String, dynamic>>> testGroupMessagesStream(String groupId) {
+    return _supabase
+        .from('group_messages')
+        .stream(primaryKey: ['id'])
+        .eq('group_id', groupId)
+        .order('created_at', ascending: true)
+        .map((rows) {
+          return rows.map((row) => Map<String, dynamic>.from(row)).toList();
+        });
+  }
+
+  // Get user's groups with last message and member info
+  Future<List<Map<String, dynamic>>> getUserGroupsWithDetails() async {
+    try {
+      final groups = await getUserGroups();
+      final groupsWithDetails = <Map<String, dynamic>>[];
+
+      for (final group in groups) {
+        try {
+          // Get last message
+          final lastMessage =
+              await _supabase
+                  .from('group_messages')
+                  .select('*')
+                  .eq('group_id', group['id'])
+                  .order('created_at', ascending: false)
+                  .limit(1)
+                  .maybeSingle();
+
+          // Get all members for this group
+          final members = await getGroupMembers(group['id']);
+
+          // Get member names (first 3 members)
+          final memberNames = <String>[];
+          for (int i = 0; i < members.length && i < 3; i++) {
+            final member = members[i];
+            if (member['profiles'] != null) {
+              memberNames.add(member['profiles']['display_name'] ?? 'Unknown');
+            } else {
+              memberNames.add('Unknown');
+            }
+          }
+
+          groupsWithDetails.add({
+            ...group,
+            'last_message': lastMessage,
+            'member_count': members.length,
+            'member_names': memberNames,
+          });
+        } catch (e) {
+          // If there's an error getting details, just add the basic group info
+          groupsWithDetails.add({
+            ...group,
+            'last_message': null,
+            'member_count': 0,
+            'member_names': [],
+          });
+        }
+      }
+
+      return groupsWithDetails;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Real-time stream for group messages that will trigger group list updates
+  Stream<void> getGroupMessagesStream() {
+    return _supabase.from('group_messages').stream(primaryKey: ['id']).map((
+      event,
+    ) {
+      // This stream will emit whenever a new message is added to any group
+      // The actual data processing will be done in the UI layer
+      return;
+    });
+  }
+
+  // Real-time stream for specific group messages
+  Stream<List<Map<String, dynamic>>> getGroupMessagesStreamForGroup(
+    String groupId,
+  ) {
+    return _supabase
+        .from('group_messages')
+        .stream(primaryKey: ['id'])
+        .eq('group_id', groupId)
+        .order('created_at', ascending: true)
+        .map((rows) {
+          return rows.map((row) => Map<String, dynamic>.from(row)).toList();
+        });
   }
 }
