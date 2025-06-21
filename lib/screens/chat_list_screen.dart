@@ -266,15 +266,10 @@ class _ChatListScreenState extends State<ChatListScreen>
         itemBuilder: (context, index) {
           final user = _users[index];
           return ListTile(
-            leading: CircleAvatar(
-              backgroundImage:
-                  user['avatar_url'] != null
-                      ? NetworkImage(user['avatar_url'])
-                      : null,
-              child:
-                  user['avatar_url'] == null
-                      ? Text(user['display_name'][0].toUpperCase())
-                      : null,
+            leading: _buildUserAvatar(
+              user['id'],
+              user['display_name'] ?? 'Unknown User',
+              Theme.of(context),
             ),
             title: Text(user['display_name'] ?? 'Unknown User'),
             subtitle: Text(user['username'] ?? ''),
@@ -323,15 +318,9 @@ class _ChatListScreenState extends State<ChatListScreen>
           }
 
           return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Text(
-                group['name'][0].toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            leading: _buildGroupAvatar(
+              group['name'] ?? 'Unknown Group',
+              Theme.of(context),
             ),
             title: Text(
               group['name'] ?? 'Unknown Group',
@@ -405,5 +394,140 @@ class _ChatListScreenState extends State<ChatListScreen>
     } catch (e) {
       return '';
     }
+  }
+
+  // Generate a unique gradient for each user based on their ID
+  List<Color> _getUserGradient(String userId, ThemeData theme) {
+    // Create a hash from the user ID to get consistent colors
+    final hash = userId.hashCode;
+    final colors = [
+      [
+        theme.colorScheme.primary,
+        theme.colorScheme.secondary,
+      ], // Primary to Secondary
+      [
+        theme.colorScheme.tertiary,
+        theme.colorScheme.primary,
+      ], // Tertiary to Primary
+      [
+        theme.colorScheme.secondary,
+        theme.colorScheme.tertiary,
+      ], // Secondary to Tertiary
+      [
+        theme.colorScheme.primary,
+        theme.colorScheme.primary.withValues(alpha: 0.7),
+      ], // Primary variants
+      [
+        theme.colorScheme.secondary,
+        theme.colorScheme.secondary.withValues(alpha: 0.7),
+      ], // Secondary variants
+      [
+        theme.colorScheme.tertiary,
+        theme.colorScheme.tertiary.withValues(alpha: 0.7),
+      ], // Tertiary variants
+      [
+        theme.colorScheme.primary,
+        theme.colorScheme.tertiary,
+      ], // Primary to Tertiary
+      [
+        theme.colorScheme.secondary,
+        theme.colorScheme.primary,
+      ], // Secondary to Primary
+      [
+        theme.colorScheme.tertiary,
+        theme.colorScheme.secondary,
+      ], // Tertiary to Secondary
+      [
+        theme.colorScheme.primary.withValues(alpha: 0.8),
+        theme.colorScheme.secondary.withValues(alpha: 0.8),
+      ], // Muted variants
+    ];
+
+    // Use the hash to select a consistent gradient for each user
+    final index = (hash.abs() % colors.length);
+    return colors[index];
+  }
+
+  // Generate a unique gradient for each group based on their name
+  List<Color> _getGroupGradient(String groupName, ThemeData theme) {
+    // Create a hash from the group name to get consistent colors
+    final hash = groupName.hashCode;
+    final colors = [
+      [Colors.purple, Colors.pink], // Purple to Pink
+      [Colors.blue, Colors.cyan], // Blue to Cyan
+      [Colors.green, Colors.teal], // Green to Teal
+      [Colors.orange, Colors.red], // Orange to Red
+      [Colors.indigo, Colors.purple], // Indigo to Purple
+      [Colors.teal, Colors.green], // Teal to Green
+      [Colors.pink, Colors.orange], // Pink to Orange
+      [Colors.cyan, Colors.blue], // Cyan to Blue
+      [Colors.red, Colors.pink], // Red to Pink
+      [Colors.purple, Colors.indigo], // Purple to Indigo
+      [Colors.green, Colors.blue], // Green to Blue
+      [Colors.orange, Colors.yellow], // Orange to Yellow
+      [Colors.pink, Colors.purple], // Pink to Purple
+      [Colors.blue, Colors.green], // Blue to Green
+      [Colors.red, Colors.orange], // Red to Orange
+    ];
+
+    // Use the hash to select a consistent gradient for each group
+    final index = (hash.abs() % colors.length);
+    return colors[index];
+  }
+
+  // Build user avatar with gradient background
+  Widget _buildUserAvatar(String userId, String userName, ThemeData theme) {
+    final gradient = _getUserGradient(userId, theme);
+
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: gradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: Colors.transparent,
+        child: Text(
+          userName[0].toUpperCase(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Build group avatar with gradient background
+  Widget _buildGroupAvatar(String groupName, ThemeData theme) {
+    final gradient = _getGroupGradient(groupName, theme);
+
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: gradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: Colors.transparent,
+        child: Text(
+          groupName[0].toUpperCase(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 }
