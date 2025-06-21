@@ -99,8 +99,8 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(28),
-              topRight: Radius.circular(28),
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
             boxShadow: [
               BoxShadow(
@@ -114,9 +114,9 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             children: [
               // Handle bar
               Container(
-                margin: const EdgeInsets.only(top: 16),
-                width: 56,
-                height: 6,
+                margin: const EdgeInsets.only(top: 14),
+                width: 50,
+                height: 4,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(3),
@@ -129,7 +129,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               // Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -141,7 +141,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                         theme,
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
 
                       // Payment Status Section
                       _buildPaymentStatusSection(theme),
@@ -169,16 +169,16 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
           end: Alignment.bottomRight,
         ),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
@@ -190,39 +190,39 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               child: const Icon(
                 Icons.receipt_long,
                 color: Colors.white,
-                size: 32,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
                     'Expense Details',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
@@ -235,7 +235,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 '\$${amount.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -254,7 +254,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     ThemeData theme,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -280,7 +280,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           _buildDetailRow('Paid by', paidByName, Icons.person, theme),
           const SizedBox(height: 16),
@@ -293,7 +293,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
           ),
 
           if (description != null && description.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildDetailRow(
               'Description',
               description,
@@ -309,12 +309,12 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
   Widget _buildPaymentStatusSection(ThemeData theme) {
     if (_isLoadingPaymentDetails) {
       return Container(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(11),
         child: const Center(
           child: Column(
             children: [
               CircularProgressIndicator(),
-              SizedBox(height: 16),
+              SizedBox(height: 14),
               Text('Loading payment details...'),
             ],
           ),
@@ -324,7 +324,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
 
     if (_errorMessage != null) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: theme.colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12),
@@ -350,7 +350,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
         _paymentDetails.where((member) => member['is_paid'] == false).toList();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -383,10 +383,10 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 child: Icon(
                   Icons.payment,
                   color: theme.colorScheme.primary,
-                  size: 24,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Payment Status',
@@ -398,8 +398,8 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                  horizontal: 14,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.2),
@@ -415,7 +415,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
           // Paid members
           if (paidMembers.isNotEmpty) ...[
@@ -426,7 +426,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               Icons.check_circle,
               theme,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
           ],
 
           // Unpaid members
@@ -463,14 +463,14 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,7 +506,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     ThemeData theme,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
@@ -523,7 +523,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 18),
+                child: Icon(icon, color: color, size: 16),
               ),
               const SizedBox(width: 12),
               Text(
@@ -531,7 +531,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: color,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -549,7 +549,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 8,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.15),
@@ -563,7 +563,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                           icon == Icons.check_circle
                               ? Icons.person
                               : Icons.person_outline,
-                          size: 16,
+                          size: 14,
                           color: color,
                         ),
                         const SizedBox(width: 6),

@@ -5,6 +5,8 @@ import 'chat_detail_screen.dart';
 import 'create_group_screen.dart';
 import 'group_chat_detail_screen.dart';
 import 'profile_screen.dart';
+import 'stats_screen.dart';
+import 'all_expenses_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
@@ -114,16 +116,18 @@ class _ChatListScreenState extends State<ChatListScreen>
                   );
                   break;
                 case 'stats':
-                  // TODO: Navigate to stats screen when created
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Stats feature coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StatsScreen(),
+                    ),
                   );
                   break;
                 case 'expenses':
-                  // TODO: Create a dedicated "All Expenses" screen that shows expenses across all groups
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('All Expenses feature coming soon!'),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllExpensesScreen(),
                     ),
                   );
                   break;

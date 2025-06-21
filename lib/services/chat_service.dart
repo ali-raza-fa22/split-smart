@@ -1058,4 +1058,83 @@ class ChatService {
       };
     }
   }
+
+  // Get all expenses from all groups the user is a member of
+  Future<List<Map<String, dynamic>>> getAllUserExpenses() async {
+    try {
+      // First get all groups the user is a member of
+      final userGroups = await _supabase
+          .from('group_members')
+          .select('group_id')
+          .eq('user_id', _supabase.auth.currentUser!.id);
+
+      if (userGroups.isEmpty) {
+        return [];
+      }
+
+      final groupIds = userGroups.map((group) => group['group_id']).toList();
+
+      // Get all expenses from these groups
+      final expenses = await _supabase
+          .from('expenses')
+          .select('*')
+          .inFilter('group_id', groupIds)
+          .order('created_at', ascending: false);
+
+      if (expenses.isEmpty) {
+        return [];
+      }
+
+      // Get all user IDs from expenses
+      final userIds = <String>{};
+      for (final expense in expenses) {
+        userIds.add(expense['paid_by']);
+        userIds.add(expense['created_by']);
+      }
+
+      // Get group IDs
+      final expenseGroupIds =
+          expenses.map((expense) => expense['group_id']).toSet().toList();
+
+      // Get profiles for all users
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds.toList());
+
+      // Get groups
+      final groups = await _supabase
+          .from('groups')
+          .select('*')
+          .inFilter('id', expenseGroupIds);
+
+      // Create maps for easy lookup
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      final groupsMap = <String, Map<String, dynamic>>{};
+      for (final group in groups) {
+        groupsMap[group['id']] = group;
+      }
+
+      // Combine all data
+      final result = <Map<String, dynamic>>[];
+      for (final expense in expenses) {
+        final paidByProfile = profilesMap[expense['paid_by']];
+        final group = groupsMap[expense['group_id']];
+
+        result.add({
+          ...expense,
+          'groups': group ?? {},
+          'profiles': paidByProfile ?? {},
+        });
+      }
+
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
