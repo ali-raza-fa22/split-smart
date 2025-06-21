@@ -64,7 +64,23 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
   Future<void> _markAsPaid(String expenseShareId) async {
     try {
       await _chatService.markExpenseShareAsPaid(expenseShareId);
-      await _loadData(); // Reload data
+
+      // Update only the specific expense share in the list
+      setState(() {
+        final index = _userExpenseShares.indexWhere(
+          (share) => share['id'] == expenseShareId,
+        );
+        if (index != -1) {
+          // Create a new list to trigger rebuild
+          _userExpenseShares = List.from(_userExpenseShares);
+          // Update the specific share to mark it as paid
+          _userExpenseShares[index] = {
+            ..._userExpenseShares[index],
+            'is_paid': true,
+          };
+        }
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -264,92 +280,101 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(
-              backgroundColor:
-                  isPaid ? Colors.green : theme.colorScheme.primary,
-              child: Icon(
-                isPaid ? Icons.check : Icons.pending,
-                color: Colors.white,
-              ),
-            ),
-            title: Column(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                // Leading avatar
+                CircleAvatar(
+                  backgroundColor:
+                      isPaid ? Colors.green : theme.colorScheme.primary,
+                  child: Icon(
+                    isPaid ? Icons.check : Icons.pending,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Group: ${group['name'] ?? 'Unknown Group'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text('Paid by: $paidByName'),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isPaid
-                            ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isPaid ? 'Paid' : 'Pending',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isPaid ? Colors.green : Colors.orange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '\$${amountOwed.toStringAsFixed(2)}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (!isPaid) ...[
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 32,
-                    child: ElevatedButton(
-                      onPressed: () => _markAsPaid(share['id']),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                const SizedBox(width: 16),
+                // Main content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title and group
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      child: const Text(
-                        'Mark Paid',
-                        style: TextStyle(fontSize: 12),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Group: ${group['name'] ?? 'Unknown Group'}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Paid by info
+                      Text('Paid by: $paidByName'),
+                      const SizedBox(height: 4),
+                      // Status badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isPaid
+                                  ? Colors.green.withValues(alpha: 0.1)
+                                  : Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isPaid ? 'Paid' : 'Pending',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isPaid ? Colors.green : Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Amount and button
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${amountOwed.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    if (!isPaid) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () => _markAsPaid(share['id']),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Mark Paid',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),

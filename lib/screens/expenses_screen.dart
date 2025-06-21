@@ -71,7 +71,26 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   Future<void> _markAsPaid(String expenseShareId) async {
     try {
       await _chatService.markExpenseShareAsPaid(expenseShareId);
-      await _loadData(); // Reload data
+
+      // Update only the specific expense share in the list
+      setState(() {
+        final index = _userExpenseShares.indexWhere(
+          (share) => share['id'] == expenseShareId,
+        );
+        if (index != -1) {
+          // Create a new list to trigger rebuild
+          _userExpenseShares = List.from(_userExpenseShares);
+          // Update the specific share to mark it as paid
+          _userExpenseShares[index] = {
+            ..._userExpenseShares[index],
+            'is_paid': true,
+          };
+        }
+      });
+
+      // Refresh summary data since balances might have changed
+      _refreshSummaryData();
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -83,6 +102,19 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           context,
         ).showSnackBar(SnackBar(content: Text('Error marking as paid: $e')));
       }
+    }
+  }
+
+  Future<void> _refreshSummaryData() async {
+    try {
+      final summary = await _chatService.getGroupExpenseSummary(widget.groupId);
+      if (mounted) {
+        setState(() {
+          _expenseSummary = summary;
+        });
+      }
+    } catch (e) {
+      // Silently handle summary refresh errors
     }
   }
 
