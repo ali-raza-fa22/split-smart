@@ -386,6 +386,46 @@ class ChatService {
     }
   }
 
+  // Delete group and all related data (admin only)
+  Future<void> deleteGroup(String groupId) async {
+    try {
+      // Check if current user is admin
+      final isAdmin = await isGroupAdmin(groupId);
+      if (!isAdmin) {
+        throw Exception('Only admins can delete the group');
+      }
+
+      // Delete in the correct order to respect foreign key constraints
+      // 1. Get expense IDs first, then delete expense shares
+      final expenseIds = await _supabase
+          .from('expenses')
+          .select('id')
+          .eq('group_id', groupId);
+
+      if (expenseIds.isNotEmpty) {
+        final expenseIdList = expenseIds.map((e) => e['id']).toList();
+        await _supabase
+            .from('expense_shares')
+            .delete()
+            .inFilter('expense_id', expenseIdList);
+      }
+
+      // 2. Delete expenses
+      await _supabase.from('expenses').delete().eq('group_id', groupId);
+
+      // 3. Delete group messages
+      await _supabase.from('group_messages').delete().eq('group_id', groupId);
+
+      // 4. Delete group members
+      await _supabase.from('group_members').delete().eq('group_id', groupId);
+
+      // 5. Finally delete the group itself
+      await _supabase.from('groups').delete().eq('id', groupId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Test if user can send messages to group (for debugging RLS policies)
   Future<bool> canSendMessageToGroup(String groupId) async {
     try {

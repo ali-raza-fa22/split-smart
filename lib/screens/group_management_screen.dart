@@ -120,6 +120,79 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
     }
   }
 
+  Future<void> _deleteGroup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Group'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Are you sure you want to delete "${widget.groupName}"?',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'This action will permanently delete:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                const Text('• All group messages'),
+                const Text('• All expenses and expense shares'),
+                const Text('• All member relationships'),
+                const Text('• The group itself'),
+                const SizedBox(height: 16),
+                const Text(
+                  'This action cannot be undone!',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete Group'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _chatService.deleteGroup(widget.groupId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Group deleted successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.of(context).pop('deleted');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting group: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _addMember(Map<String, dynamic> user) async {
     try {
       await _chatService.addMemberToGroup(
@@ -208,6 +281,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               icon: const Icon(Icons.edit),
               onPressed: _renameGroup,
               tooltip: 'Rename Group',
+            ),
+          if (_isAdmin)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteGroup,
+              tooltip: 'Delete Group',
             ),
         ],
       ),

@@ -352,14 +352,24 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                   );
                   // If group was renamed, update the title
                   if (result != null && result is String) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Group renamed to: $result')),
-                      );
+                    if (result == 'deleted') {
+                      // Group was deleted, navigate back to chat list
+                      if (mounted) {
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                      }
+                    } else {
+                      // Group was renamed
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Group renamed to: $result')),
+                        );
+                      }
+                      setState(() {
+                        _currentGroupName = result;
+                      });
                     }
-                    setState(() {
-                      _currentGroupName = result;
-                    });
                   }
                   break;
               }

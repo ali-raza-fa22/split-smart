@@ -363,7 +363,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                     )
                     : null,
             onTap: () async {
-              final result = await Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder:
