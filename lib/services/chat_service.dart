@@ -1260,4 +1260,15 @@ class ChatService {
       rethrow;
     }
   }
+
+  // Get group information by ID
+  Future<Map<String, dynamic>?> getGroupInfo(String groupId) async {
+    try {
+      final response =
+          await _supabase.from('groups').select('*').eq('id', groupId).single();
+      return response;
+    } catch (e) {
+      return null;
+    }
+  }
 }

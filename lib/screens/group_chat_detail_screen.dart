@@ -30,13 +30,22 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
   List<Map<String, dynamic>> _currentMessages = [];
   StreamSubscription? _messagesSubscription;
   String _selectedCategory = 'all';
+  late String _currentGroupName;
 
   @override
   void initState() {
     super.initState();
+    _currentGroupName = widget.groupName;
     _loadMemberProfiles();
     _loadInitialMessages();
     _setupRealtimeSubscription();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh group name when dependencies change (e.g., when returning from other screens)
+    _refreshGroupName();
   }
 
   @override
@@ -223,7 +232,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.groupName),
+        title: Text(_currentGroupName),
         actions: [
           // Category filter
           PopupMenuButton<String>(
@@ -309,7 +318,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                       builder:
                           (context) => ExpensesScreen(
                             groupId: widget.groupId,
-                            groupName: widget.groupName,
+                            groupName: _currentGroupName,
                           ),
                     ),
                   );
@@ -321,7 +330,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                       builder:
                           (context) => AddExpenseScreen(
                             groupId: widget.groupId,
-                            groupName: widget.groupName,
+                            groupName: _currentGroupName,
                           ),
                     ),
                   );
@@ -337,19 +346,20 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                       builder:
                           (context) => GroupManagementScreen(
                             groupId: widget.groupId,
-                            groupName: widget.groupName,
+                            groupName: _currentGroupName,
                           ),
                     ),
                   );
                   // If group was renamed, update the title
                   if (result != null && result is String) {
-                    // You might want to update the group name in the parent widget
-                    // For now, we'll just show a snackbar
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Group renamed to: $result')),
                       );
                     }
+                    setState(() {
+                      _currentGroupName = result;
+                    });
                   }
                   break;
               }
@@ -949,5 +959,18 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
     }
 
     showExpenseDetailsModal(context, expenseData);
+  }
+
+  Future<void> _refreshGroupName() async {
+    try {
+      final groupInfo = await _chatService.getGroupInfo(widget.groupId);
+      if (groupInfo != null && groupInfo['name'] != _currentGroupName) {
+        setState(() {
+          _currentGroupName = groupInfo['name'];
+        });
+      }
+    } catch (e) {
+      // Silently handle errors - group name refresh is not critical
+    }
   }
 }

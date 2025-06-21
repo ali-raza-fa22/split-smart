@@ -18,7 +18,7 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
   List<Map<String, dynamic>> _users = [];
@@ -30,16 +30,37 @@ class _ChatListScreenState extends State<ChatListScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _loadData();
     _setupRealtimeSubscription();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _groupMessagesSubscription?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh groups when app becomes active (user returns to app)
+    if (state == AppLifecycleState.resumed && mounted) {
+      _refreshGroupsOnly();
+    }
+  }
+
+  // Refresh groups when tab changes to groups tab
+  void _onTabChanged() {
+    if (_tabController.index == 1) {
+      // Groups tab
+      _refreshGroupsOnly();
+    }
   }
 
   void _setupRealtimeSubscription() {
@@ -342,7 +363,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                     )
                     : null,
             onTap: () async {
-              await Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder:
@@ -352,7 +373,11 @@ class _ChatListScreenState extends State<ChatListScreen>
                       ),
                 ),
               );
-              // No need to manually refresh - real-time subscription will handle updates
+              // Refresh groups list when returning from group chat
+              // This ensures updated group names are reflected
+              if (mounted) {
+                _refreshGroupsOnly();
+              }
             },
           );
         },
