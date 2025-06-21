@@ -22,9 +22,106 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Split Smart',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6366F1), // Indigo
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: const Color(0xFF6366F1),
+          secondary: const Color(0xFF8B5CF6),
+          tertiary: const Color(0xFF06B6D4),
+          surface: const Color(0xFFFAFAFA),
+          background: const Color(0xFFFFFFFF),
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: const Color(0xFF1F2937),
+          onBackground: const Color(0xFF1F2937),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF6366F1),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1),
+            foregroundColor: Colors.white,
+            elevation: 2,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF8FAFC),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        cardTheme: CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: Colors.white,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF6366F1),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6366F1),
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: const Color(0xFF6366F1),
+          secondary: const Color(0xFF8B5CF6),
+          tertiary: const Color(0xFF06B6D4),
+          surface: const Color(0xFF1F2937),
+          background: const Color(0xFF111827),
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: const Color(0xFFF9FAFB),
+          onBackground: const Color(0xFFF9FAFB),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1F2937),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        cardTheme: CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: const Color(0xFF1F2937),
+        ),
       ),
       initialRoute: '/login',
       routes: {

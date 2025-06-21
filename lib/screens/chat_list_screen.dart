@@ -98,6 +98,7 @@ class _ChatListScreenState extends State<ChatListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('SplitSmart'),
+
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -225,7 +226,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                         ? Theme.of(context).colorScheme.onSurface
                         : Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             trailing:
@@ -236,7 +237,7 @@ class _ChatListScreenState extends State<ChatListScreen>
                         fontSize: 12,
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     )
                     : null,

@@ -166,6 +166,8 @@ class ChatService {
   Future<void> sendGroupMessage({
     required String groupId,
     required String content,
+    String category = 'general',
+    Map<String, dynamic>? expenseData,
   }) async {
     try {
       final timestamp = DateTime.now().toIso8601String();
@@ -174,7 +176,9 @@ class ChatService {
         'group_id': groupId,
         'sender_id': _supabase.auth.currentUser!.id,
         'content': content,
+        'category': category,
         'created_at': timestamp,
+        'expense_data': expenseData,
       });
 
       // Small delay to ensure database has processed the insert
@@ -593,5 +597,473 @@ class ChatService {
         .map((rows) {
           return rows.map((row) => Map<String, dynamic>.from(row)).toList();
         });
+  }
+
+  // Expense Management Methods
+
+  // Create a new expense
+  Future<String> createExpense({
+    required String groupId,
+    required String title,
+    required double totalAmount,
+    required String paidBy,
+    String? description,
+  }) async {
+    try {
+      final response =
+          await _supabase
+              .from('expenses')
+              .insert({
+                'group_id': groupId,
+                'title': title,
+                'description': description,
+                'total_amount': totalAmount,
+                'paid_by': paidBy,
+                'created_by': _supabase.auth.currentUser!.id,
+                'created_at': DateTime.now().toIso8601String(),
+              })
+              .select('id')
+              .single();
+
+      final expenseId = response['id'];
+
+      // Small delay to ensure the database trigger has processed the expense shares
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Get the expense data with profile information using manual join
+      final expenseData =
+          await _supabase
+              .from('expenses')
+              .select('*')
+              .eq('id', expenseId)
+              .single();
+
+      // Get the profile of the person who paid
+      final paidByProfile =
+          await _supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', paidBy)
+              .single();
+
+      // Combine the data
+      final combinedExpenseData = {...expenseData, 'profiles': paidByProfile};
+
+      // Send an expense message to the group with expense data
+      await sendGroupMessage(
+        groupId: groupId,
+        content: '💰 New expense: $title - \$${totalAmount.toStringAsFixed(2)}',
+        category: 'expense',
+        expenseData: combinedExpenseData,
+      );
+
+      return expenseId;
+    } catch (e) {
+      print('Error creating expense: $e'); // Add debug logging
+      rethrow;
+    }
+  }
+
+  // Get all expenses for a group
+  Future<List<Map<String, dynamic>>> getGroupExpenses(String groupId) async {
+    try {
+      final expenses = await _supabase
+          .from('expenses')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('created_at', ascending: false);
+
+      // Get all unique user IDs from expenses
+      final userIds = <String>{};
+      for (final expense in expenses) {
+        userIds.add(expense['paid_by']);
+        userIds.add(expense['created_by']);
+      }
+
+      // Get profiles for all users
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds.toList());
+
+      // Create a map of user_id to profile
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      // Combine expenses with profiles
+      final result = <Map<String, dynamic>>[];
+      for (final expense in expenses) {
+        final paidByProfile = profilesMap[expense['paid_by']];
+        result.add({...expense, 'profiles': paidByProfile ?? {}});
+      }
+
+      return result;
+    } catch (e) {
+      print('Error getting group expenses: $e'); // Add debug logging
+      rethrow;
+    }
+  }
+
+  // Get user's expense shares (what they owe)
+  Future<List<Map<String, dynamic>>> getUserExpenseShares() async {
+    try {
+      final expenseShares = await _supabase
+          .from('expense_shares')
+          .select('*')
+          .eq('user_id', _supabase.auth.currentUser!.id)
+          .order('created_at', ascending: false);
+
+      if (expenseShares.isEmpty) {
+        return [];
+      }
+
+      // Get all expense IDs
+      final expenseIds =
+          expenseShares.map((share) => share['expense_id']).toList();
+
+      // Get expenses with group info
+      final expenses = await _supabase
+          .from('expenses')
+          .select('*')
+          .inFilter('id', expenseIds);
+
+      // Get all user IDs from expenses
+      final userIds = <String>{};
+      for (final expense in expenses) {
+        userIds.add(expense['paid_by']);
+        userIds.add(expense['created_by']);
+      }
+
+      // Get group IDs
+      final groupIds =
+          expenses.map((expense) => expense['group_id']).toSet().toList();
+
+      // Get profiles for all users
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds.toList());
+
+      // Get groups
+      final groups = await _supabase
+          .from('groups')
+          .select('*')
+          .inFilter('id', groupIds);
+
+      // Create maps for easy lookup
+      final expensesMap = <String, Map<String, dynamic>>{};
+      for (final expense in expenses) {
+        expensesMap[expense['id']] = expense;
+      }
+
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      final groupsMap = <String, Map<String, dynamic>>{};
+      for (final group in groups) {
+        groupsMap[group['id']] = group;
+      }
+
+      // Combine all data
+      final result = <Map<String, dynamic>>[];
+      for (final share in expenseShares) {
+        final expense = expensesMap[share['expense_id']];
+        if (expense != null) {
+          final paidByProfile = profilesMap[expense['paid_by']];
+          final group = groupsMap[expense['group_id']];
+
+          result.add({
+            ...share,
+            'expenses': {
+              ...expense,
+              'groups': group ?? {},
+              'profiles': paidByProfile ?? {},
+            },
+          });
+        }
+      }
+
+      return result;
+    } catch (e) {
+      print('Error getting user expense shares: $e'); // Add debug logging
+      rethrow;
+    }
+  }
+
+  // Get all expenses created by the current user
+  Future<List<Map<String, dynamic>>> getUserCreatedExpenses() async {
+    try {
+      final expenses = await _supabase
+          .from('expenses')
+          .select('*')
+          .eq('created_by', _supabase.auth.currentUser!.id)
+          .order('created_at', ascending: false);
+
+      if (expenses.isEmpty) {
+        return [];
+      }
+
+      // Get all user IDs from expenses
+      final userIds = <String>{};
+      for (final expense in expenses) {
+        userIds.add(expense['paid_by']);
+        userIds.add(expense['created_by']);
+      }
+
+      // Get group IDs
+      final groupIds =
+          expenses.map((expense) => expense['group_id']).toSet().toList();
+
+      // Get profiles for all users
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds.toList());
+
+      // Get groups
+      final groups = await _supabase
+          .from('groups')
+          .select('*')
+          .inFilter('id', groupIds);
+
+      // Create maps for easy lookup
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      final groupsMap = <String, Map<String, dynamic>>{};
+      for (final group in groups) {
+        groupsMap[group['id']] = group;
+      }
+
+      // Combine all data
+      final result = <Map<String, dynamic>>[];
+      for (final expense in expenses) {
+        final paidByProfile = profilesMap[expense['paid_by']];
+        final group = groupsMap[expense['group_id']];
+
+        result.add({
+          ...expense,
+          'groups': group ?? {},
+          'profiles': paidByProfile ?? {},
+        });
+      }
+
+      return result;
+    } catch (e) {
+      print('Error getting user created expenses: $e');
+      rethrow;
+    }
+  }
+
+  // Mark an expense share as paid
+  Future<void> markExpenseShareAsPaid(String expenseShareId) async {
+    try {
+      await _supabase
+          .from('expense_shares')
+          .update({
+            'is_paid': true,
+            'paid_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', expenseShareId)
+          .eq('user_id', _supabase.auth.currentUser!.id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get expense summary for a group
+  Future<Map<String, dynamic>> getGroupExpenseSummary(String groupId) async {
+    try {
+      final expenses = await getGroupExpenses(groupId);
+      final members = await getGroupMembers(groupId);
+
+      double totalExpenses = 0;
+      Map<String, double> memberTotals = {};
+
+      // Initialize member totals
+      for (final member in members) {
+        memberTotals[member['user_id']] = 0;
+      }
+
+      // Calculate totals
+      for (final expense in expenses) {
+        totalExpenses += (expense['total_amount'] as num).toDouble();
+        final paidBy = expense['paid_by'];
+        memberTotals[paidBy] =
+            (memberTotals[paidBy] ?? 0) +
+            (expense['total_amount'] as num).toDouble();
+      }
+
+      final perPersonShare = totalExpenses / members.length;
+
+      // Calculate what each person owes or is owed
+      Map<String, double> memberBalances = {};
+      for (final member in members) {
+        final userId = member['user_id'];
+        final paid = memberTotals[userId] ?? 0;
+        memberBalances[userId] = paid - perPersonShare;
+      }
+
+      return {
+        'total_expenses': totalExpenses,
+        'per_person_share': perPersonShare,
+        'member_balances': memberBalances,
+        'member_totals': memberTotals,
+        'expense_count': expenses.length,
+        'members': members, // Include full member data with profiles
+      };
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get messages by category
+  Future<List<Map<String, dynamic>>> getGroupMessagesByCategory(
+    String groupId,
+    String category,
+  ) async {
+    try {
+      final messages = await _supabase
+          .from('group_messages')
+          .select('*')
+          .eq('group_id', groupId)
+          .eq('category', category)
+          .order('created_at', ascending: true);
+
+      if (messages.isEmpty) {
+        return [];
+      }
+
+      // Get all sender IDs
+      final senderIds =
+          messages.map((message) => message['sender_id']).toSet().toList();
+
+      // Get profiles for all senders
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', senderIds);
+
+      // Create a map of sender_id to profile
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      // Combine messages with profiles
+      final result = <Map<String, dynamic>>[];
+      for (final message in messages) {
+        final profile = profilesMap[message['sender_id']];
+        result.add({...message, 'profiles': profile ?? {}});
+      }
+
+      return result;
+    } catch (e) {
+      print('Error getting messages by category: $e'); // Add debug logging
+      rethrow;
+    }
+  }
+
+  // Get expense details with payment status for all members
+  Future<List<Map<String, dynamic>>> getExpenseDetailsWithPaymentStatus(
+    String expenseId,
+  ) async {
+    try {
+      final expenseShares = await _supabase
+          .from('expense_shares')
+          .select('*')
+          .eq('expense_id', expenseId)
+          .order('created_at', ascending: true);
+
+      if (expenseShares.isEmpty) {
+        return [];
+      }
+
+      // Get all user IDs from expense shares
+      final userIds = expenseShares.map((share) => share['user_id']).toList();
+
+      // Get profiles for all users
+      final profiles = await _supabase
+          .from('profiles')
+          .select('*')
+          .inFilter('id', userIds);
+
+      // Create a map of user_id to profile
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profiles) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      // Combine expense shares with profiles
+      final result = <Map<String, dynamic>>[];
+      for (final share in expenseShares) {
+        final profile = profilesMap[share['user_id']];
+        result.add({...share, 'profiles': profile ?? {}});
+      }
+
+      return result;
+    } catch (e) {
+      print(
+        'Error getting expense details with payment status: $e',
+      ); // Add debug logging
+      rethrow;
+    }
+  }
+
+  // Debug method to test expense creation
+  Future<Map<String, dynamic>> debugExpenseCreation(String groupId) async {
+    try {
+      // Test if we can access the expenses table
+      final tableTest = await _supabase
+          .from('expenses')
+          .select('count')
+          .limit(1);
+
+      // Test if we can access the expense_shares table
+      final sharesTest = await _supabase
+          .from('expense_shares')
+          .select('count')
+          .limit(1);
+
+      // Test if we can access the profiles table
+      final profilesTest = await _supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
+
+      // Test if we can access the groups table
+      final groupsTest = await _supabase
+          .from('groups')
+          .select('count')
+          .limit(1);
+
+      // Test if we can access the group_members table
+      final membersTest = await _supabase
+          .from('group_members')
+          .select('count')
+          .limit(1);
+
+      return {
+        'success': true,
+        'expenses_table': tableTest.isNotEmpty,
+        'expense_shares_table': sharesTest.isNotEmpty,
+        'profiles_table': profilesTest.isNotEmpty,
+        'groups_table': groupsTest.isNotEmpty,
+        'group_members_table': membersTest.isNotEmpty,
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+        'current_user': _supabase.auth.currentUser?.id,
+      };
+    }
   }
 }
