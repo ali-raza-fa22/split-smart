@@ -26,7 +26,10 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Map<String, Map<String, dynamic>> _memberProfiles = {};
-  bool _isLoadingMembers = true;
+  List<Map<String, dynamic>> _membersInfo = [];
+  Map<String, dynamic> _groupInfo = {};
+  bool _isLoadingSummary = true;
+  int _expensesCount = 0;
   List<Map<String, dynamic>> _currentMessages = [];
   StreamSubscription? _messagesSubscription;
   String _selectedCategory = 'all';
@@ -36,7 +39,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
   void initState() {
     super.initState();
     _currentGroupName = widget.groupName;
-    _loadMemberProfiles();
+    _loadGroupSummary();
     _loadInitialMessages();
     _setupRealtimeSubscription();
   }
@@ -56,25 +59,47 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
     super.dispose();
   }
 
-  Future<void> _loadMemberProfiles() async {
+  Future<void> _loadGroupSummary() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingSummary = true;
+      });
+    }
     try {
-      final members = await _chatService.getGroupMembers(widget.groupId);
+      // Fetch all data in parallel
+      final results = await Future.wait([
+        _chatService.getGroupMembers(widget.groupId),
+        _chatService.getGroupExpensesCount(widget.groupId),
+        _chatService.getGroupInfo(widget.groupId),
+      ]);
+
+      final members = results[0] as List<Map<String, dynamic>>;
+      final expenseCount = results[1] as int;
+      final groupInfo = results[2] as Map<String, dynamic>?;
+
       final profiles = <String, Map<String, dynamic>>{};
       for (var member in members) {
         if (member['profiles'] != null) {
           profiles[member['user_id']] = member['profiles'];
         }
       }
+
       if (mounted) {
         setState(() {
+          _membersInfo = members;
           _memberProfiles = profiles;
-          _isLoadingMembers = false;
+          _expensesCount = expenseCount;
+          _groupInfo = groupInfo ?? {};
+          _isLoadingSummary = false;
         });
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoadingSummary = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading member info: $e')),
+          SnackBar(content: Text('Error loading group summary: $e')),
         );
       }
     }
@@ -171,6 +196,122 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
         .toList();
   }
 
+  // Format timestamp for message bubbles (WhatsApp style)
+  String _formatMessageTime(String? createdAt) {
+    if (createdAt == null) return '';
+
+    try {
+      final messageTime = DateTime.parse(createdAt);
+      // Only show time (e.g., "2:30 PM")
+      return _formatTime(messageTime);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  // Format time (e.g., "2:30 PM")
+  String _formatTime(DateTime time) {
+    final hour = time.hour;
+    final minute = time.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
+  }
+
+  // Format date (e.g., "Jan 15")
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  // Get day name (e.g., "Monday")
+  String _getDayName(DateTime date) {
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    return days[date.weekday - 1];
+  }
+
+  // Format day separator (e.g., "Today", "Yesterday", "Monday, January 15")
+  String _formatDaySeparator(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return 'Today';
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday';
+    } else if (now.difference(date).inDays < 7) {
+      return _getDayName(date);
+    } else {
+      return _formatDate(date);
+    }
+  }
+
+  // Group messages by day
+  List<Map<String, dynamic>> _getGroupedMessages() {
+    final filteredMessages = _getFilteredMessages();
+    final groupedMessages = <Map<String, dynamic>>[];
+
+    DateTime? currentDay;
+
+    for (final message in filteredMessages) {
+      try {
+        final messageTime = DateTime.parse(message['created_at'] ?? '');
+        final messageDate = DateTime(
+          messageTime.year,
+          messageTime.month,
+          messageTime.day,
+        );
+
+        // Add day separator if it's a new day
+        if (currentDay == null || !_isSameDay(currentDay, messageDate)) {
+          groupedMessages.add({
+            'type': 'day_separator',
+            'date': messageDate,
+            'display_text': _formatDaySeparator(messageDate),
+          });
+          currentDay = messageDate;
+        }
+
+        // Add the message
+        groupedMessages.add({'type': 'message', 'data': message});
+      } catch (e) {
+        // Skip messages with invalid dates
+        continue;
+      }
+    }
+
+    return groupedMessages;
+  }
+
+  // Check if two dates are the same day
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
   Future<void> _ensurePaymentMessagesExist() async {
     if (_selectedCategory == 'payment') {
       final paymentMessages = _getFilteredMessages();
@@ -229,10 +370,47 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
     final currentUserId = Supabase.instance.client.auth.currentUser!.id;
     final theme = Theme.of(context);
     final filteredMessages = _getFilteredMessages();
+    final memberNames =
+        _memberProfiles.values
+            .map((profile) => profile['display_name'] as String? ?? 'Unknown')
+            .toList();
+    final subtitleText = memberNames.join(', ');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentGroupName),
+        title: GestureDetector(
+          onTap: _showGroupDetailsModal,
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                child: Icon(
+                  Icons.group,
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _currentGroupName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (subtitleText.isNotEmpty)
+                      Text(
+                        subtitleText,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           // Category filter
           PopupMenuButton<String>(
@@ -455,7 +633,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
             ),
           Expanded(
             child:
-                _isLoadingMembers
+                _isLoadingSummary
                     ? const Center(child: CircularProgressIndicator())
                     : filteredMessages.isEmpty
                     ? Center(
@@ -500,25 +678,33 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                       controller: _scrollController,
                       reverse: true,
                       padding: const EdgeInsets.all(16),
-                      itemCount: filteredMessages.length,
+                      itemCount: _getGroupedMessages().length,
                       itemBuilder: (context, index) {
-                        final message =
-                            filteredMessages[filteredMessages.length -
-                                1 -
-                                index];
-                        final senderId = message['sender_id'];
-                        final isMe = senderId == currentUserId;
-                        final senderProfile = _memberProfiles[senderId];
-                        final senderName =
-                            senderProfile?['display_name'] ?? 'Unknown';
+                        final groupedMessages = _getGroupedMessages();
+                        final item =
+                            groupedMessages[groupedMessages.length - 1 - index];
 
-                        return _buildMessageBubble(
-                          context,
-                          message,
-                          isMe,
-                          senderName,
-                          theme,
-                        );
+                        if (item['type'] == 'day_separator') {
+                          return _buildDaySeparator(
+                            item['display_text'],
+                            theme,
+                          );
+                        } else {
+                          final message = item['data'];
+                          final senderId = message['sender_id'];
+                          final isMe = senderId == currentUserId;
+                          final senderProfile = _memberProfiles[senderId];
+                          final senderName =
+                              senderProfile?['display_name'] ?? 'Unknown';
+
+                          return _buildMessageBubble(
+                            context,
+                            message,
+                            isMe,
+                            senderName,
+                            theme,
+                          );
+                        }
                       },
                     ),
           ),
@@ -784,6 +970,26 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                         fontSize: 15,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    // Timestamp
+                    Align(
+                      alignment:
+                          isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Text(
+                        _formatMessageTime(message['created_at']),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              isMe
+                                  ? theme.colorScheme.onPrimary.withValues(
+                                    alpha: 0.7,
+                                  )
+                                  : theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -982,5 +1188,205 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
     } catch (e) {
       // Silently handle errors - group name refresh is not critical
     }
+  }
+
+  Widget _buildDaySeparator(String text, ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1,
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Text(
+                text,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGroupDetailsModal() {
+    final theme = Theme.of(context);
+    final groupCreatedAt =
+        _groupInfo['created_at'] != null
+            ? DateTime.parse(_groupInfo['created_at'])
+            : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.4,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundColor: theme.colorScheme.secondaryContainer,
+                    child: Icon(
+                      Icons.group,
+                      size: 40,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    _currentGroupName,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (groupCreatedAt != null) ...[
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      'Created on ${_formatDate(groupCreatedAt)}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        theme,
+                        Icons.group_outlined,
+                        '${_membersInfo.length}',
+                        'Members',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        theme,
+                        Icons.receipt_long_outlined,
+                        '$_expensesCount',
+                        'Expenses',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Members',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Divider(height: 16),
+                ..._membersInfo.map((member) {
+                  final profile = member['profiles'];
+                  if (profile == null) return const SizedBox.shrink();
+
+                  final userId = member['user_id'];
+                  final displayName = profile['display_name'] ?? 'Unknown';
+                  final isAdmin = member['is_admin'] ?? false;
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: _buildUserAvatar(userId, displayName, theme),
+                    title: Text(displayName),
+                    trailing:
+                        isAdmin
+                            ? Text(
+                              "Admin",
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                            : null,
+                  );
+                }).toList(),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCard(
+    ThemeData theme,
+    IconData icon,
+    String value,
+    String label,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 24, color: theme.colorScheme.primary),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(label, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
   }
 }

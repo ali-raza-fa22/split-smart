@@ -1311,4 +1311,21 @@ class ChatService {
       return null;
     }
   }
+
+  Future<int> getGroupExpensesCount(String groupId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('expenses')
+          .select('id')
+          .eq('group_id', groupId);
+
+      if (response is List) {
+        return response.length;
+      }
+      return 0;
+    } catch (e) {
+      // Rethrow the error to be handled by the caller
+      rethrow;
+    }
+  }
 }
