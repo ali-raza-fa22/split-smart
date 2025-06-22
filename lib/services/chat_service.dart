@@ -16,6 +16,19 @@ class ChatService {
     }
   }
 
+  // Get all users with their last message
+  Future<List<Map<String, dynamic>>> getUsersWithLastMessage() async {
+    try {
+      final response = await _supabase.rpc(
+        'get_user_chats_with_last_message',
+        params: {'current_user_id': _supabase.auth.currentUser!.id},
+      );
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Create a new group
   Future<String> createGroup({
     required String name,
@@ -33,7 +46,7 @@ class ChatService {
               .insert({
                 'name': name,
                 'created_by': _supabase.auth.currentUser!.id,
-                'created_at': DateTime.now().toIso8601String(),
+                'created_at': DateTime.now().toUtc().toIso8601String(),
               })
               .select('id')
               .single();
@@ -171,7 +184,7 @@ class ChatService {
     Map<String, dynamic>? paymentData,
   }) async {
     try {
-      final timestamp = DateTime.now().toIso8601String();
+      final timestamp = DateTime.now().toUtc().toIso8601String();
 
       await _supabase.from('group_messages').insert({
         'group_id': groupId,
@@ -217,7 +230,7 @@ class ChatService {
         'sender_id': _supabase.auth.currentUser!.id,
         'receiver_id': receiverId,
         'content': content,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
       rethrow;
@@ -662,7 +675,7 @@ class ChatService {
                 'total_amount': totalAmount,
                 'paid_by': paidBy,
                 'created_by': _supabase.auth.currentUser!.id,
-                'created_at': DateTime.now().toIso8601String(),
+                'created_at': DateTime.now().toUtc().toIso8601String(),
               })
               .select('id')
               .single();
@@ -916,7 +929,7 @@ class ChatService {
           .from('expense_shares')
           .update({
             'is_paid': true,
-            'paid_at': DateTime.now().toIso8601String(),
+            'paid_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', expenseShareId)
           .eq('user_id', _supabase.auth.currentUser!.id);
@@ -937,7 +950,7 @@ class ChatService {
         'paid_by': _supabase.auth.currentUser!.id,
         'paid_by_name': currentUserProfile['display_name'],
         'expense_share_id': expenseShareId,
-        'paid_at': DateTime.now().toIso8601String(),
+        'paid_at': DateTime.now().toUtc().toIso8601String(),
       };
 
       // Send a payment message to the group
@@ -1283,7 +1296,8 @@ class ChatService {
           'paid_by': share['user_id'],
           'paid_by_name': memberName,
           'expense_share_id': share['id'],
-          'paid_at': share['paid_at'] ?? DateTime.now().toIso8601String(),
+          'paid_at':
+              share['paid_at'] ?? DateTime.now().toUtc().toIso8601String(),
           'is_historical': true, // Mark as historical payment
         };
 

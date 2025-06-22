@@ -28,8 +28,8 @@ class AuthService {
           'username': email.split('@')[0], // Use part of email as username
           'display_name':
               email.split('@')[0], // Use part of email as display name
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         });
       }
 
@@ -126,7 +126,7 @@ class AuthService {
         if (username != null) 'username': username,
         if (displayName != null) 'display_name': displayName,
         if (avatarUrl != null) 'avatar_url': avatarUrl,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
       await _supabase.from('profiles').upsert({

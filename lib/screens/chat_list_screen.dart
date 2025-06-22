@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/auth.dart';
+import '../utils/date_formatter.dart';
 import 'chat_detail_screen.dart';
 import 'create_group_screen.dart';
 import 'group_chat_detail_screen.dart';
@@ -85,7 +86,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       });
     }
     try {
-      final users = await _chatService.getUsers();
+      final users = await _chatService.getUsersWithLastMessage();
       final groups = await _chatService.getUserGroupsWithDetails();
       if (mounted) {
         setState(() {
@@ -265,6 +266,9 @@ class _ChatListScreenState extends State<ChatListScreen>
         itemCount: _users.length,
         itemBuilder: (context, index) {
           final user = _users[index];
+          final lastMessage = user['last_message_content'];
+          final lastMessageTime = user['last_message_created_at'];
+
           return ListTile(
             leading: _buildUserAvatar(
               user['id'],
@@ -272,7 +276,23 @@ class _ChatListScreenState extends State<ChatListScreen>
               Theme.of(context),
             ),
             title: Text(user['display_name'] ?? 'Unknown User'),
-            subtitle: Text(user['username'] ?? ''),
+            subtitle: Text(
+              lastMessage ?? 'No messages yet',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing:
+                lastMessageTime != null
+                    ? Text(
+                      DateFormatter.formatChatListTimestamp(lastMessageTime),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    )
+                    : null,
             onTap: () {
               Navigator.push(
                 context,
@@ -342,7 +362,9 @@ class _ChatListScreenState extends State<ChatListScreen>
             trailing:
                 lastMessage != null
                     ? Text(
-                      _formatMessageTime(lastMessage['created_at']),
+                      DateFormatter.formatChatListTimestamp(
+                        lastMessage['created_at'],
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(
@@ -374,28 +396,6 @@ class _ChatListScreenState extends State<ChatListScreen>
     );
   }
 
-  String _formatMessageTime(String? createdAt) {
-    if (createdAt == null) return '';
-
-    try {
-      final messageTime = DateTime.parse(createdAt);
-      final now = DateTime.now();
-      final difference = now.difference(messageTime);
-
-      if (difference.inDays > 0) {
-        return '${difference.inDays}d';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours}h';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes}m';
-      } else {
-        return 'now';
-      }
-    } catch (e) {
-      return '';
-    }
-  }
-
   // Generate a unique gradient for each user based on their ID
   List<Color> _getUserGradient(String userId, ThemeData theme) {
     // Create a hash from the user ID to get consistent colors
@@ -415,15 +415,15 @@ class _ChatListScreenState extends State<ChatListScreen>
       ], // Secondary to Tertiary
       [
         theme.colorScheme.primary,
-        theme.colorScheme.primary.withValues(alpha: 0.7),
+        theme.colorScheme.primary.withValues(alpha: 0.6),
       ], // Primary variants
       [
         theme.colorScheme.secondary,
-        theme.colorScheme.secondary.withValues(alpha: 0.7),
+        theme.colorScheme.secondary.withValues(alpha: 0.6),
       ], // Secondary variants
       [
         theme.colorScheme.tertiary,
-        theme.colorScheme.tertiary.withValues(alpha: 0.7),
+        theme.colorScheme.tertiary.withValues(alpha: 0.6),
       ], // Tertiary variants
       [
         theme.colorScheme.primary,
@@ -438,8 +438,8 @@ class _ChatListScreenState extends State<ChatListScreen>
         theme.colorScheme.secondary,
       ], // Tertiary to Secondary
       [
-        theme.colorScheme.primary.withValues(alpha: 0.8),
-        theme.colorScheme.secondary.withValues(alpha: 0.8),
+        theme.colorScheme.primary.withValues(alpha: 0.6),
+        theme.colorScheme.secondary.withValues(alpha: 0.6),
       ], // Muted variants
     ];
 

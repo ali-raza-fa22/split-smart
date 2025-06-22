@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/chat_service.dart';
+import '../utils/date_formatter.dart';
 import '../widgets/expense_details_modal.dart';
 import 'group_management_screen.dart';
 import 'add_expense_screen.dart';
@@ -138,7 +139,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
 
     final messageContent = _messageController.text.trim();
     final currentUserId = Supabase.instance.client.auth.currentUser!.id;
-    final timestamp = DateTime.now().toIso8601String();
 
     // Create a temporary message to show immediately
     final tempMessage = {
@@ -147,7 +147,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
       'sender_id': currentUserId,
       'content': messageContent,
       'category': 'general',
-      'created_at': timestamp,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
     };
 
     // Add message to local list immediately
@@ -202,78 +202,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
         .toList();
   }
 
-  // Format timestamp for message bubbles (WhatsApp style)
-  String _formatMessageTime(String? createdAt) {
-    if (createdAt == null) return '';
-
-    try {
-      final messageTime = DateTime.parse(createdAt);
-      // Only show time (e.g., "2:30 PM")
-      return _formatTime(messageTime);
-    } catch (e) {
-      return '';
-    }
-  }
-
-  // Format time (e.g., "2:30 PM")
-  String _formatTime(DateTime time) {
-    final hour = time.hour;
-    final minute = time.minute;
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
-  }
-
-  // Format date (e.g., "Jan 15")
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}';
-  }
-
-  // Get day name (e.g., "Monday")
-  String _getDayName(DateTime date) {
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    return days[date.weekday - 1];
-  }
-
-  // Format day separator (e.g., "Today", "Yesterday", "Monday, January 15")
-  String _formatDaySeparator(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(date.year, date.month, date.day);
-
-    if (messageDate == today) {
-      return 'Today';
-    } else if (messageDate == today.subtract(const Duration(days: 1))) {
-      return 'Yesterday';
-    } else if (now.difference(date).inDays < 7) {
-      return _getDayName(date);
-    } else {
-      return _formatDate(date);
-    }
-  }
-
   // Group messages by day
   List<Map<String, dynamic>> _getGroupedMessages() {
     final filteredMessages = _getFilteredMessages();
@@ -283,7 +211,9 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
 
     for (final message in filteredMessages) {
       try {
-        final messageTime = DateTime.parse(message['created_at'] ?? '');
+        final messageTime = DateFormatter.parseMessageTimestamp(
+          message['created_at'],
+        );
         final messageDate = DateTime(
           messageTime.year,
           messageTime.month,
@@ -291,11 +221,12 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
         );
 
         // Add day separator if it's a new day
-        if (currentDay == null || !_isSameDay(currentDay, messageDate)) {
+        if (currentDay == null ||
+            !DateFormatter.isSameDay(currentDay, messageDate)) {
           groupedMessages.add({
             'type': 'day_separator',
             'date': messageDate,
-            'display_text': _formatDaySeparator(messageDate),
+            'display_text': DateFormatter.formatDaySeparator(messageDate),
           });
           currentDay = messageDate;
         }
@@ -309,13 +240,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
     }
 
     return groupedMessages;
-  }
-
-  // Check if two dates are the same day
-  bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        date1.day == date2.day;
   }
 
   Future<void> _ensurePaymentMessagesExist() async {
@@ -929,9 +853,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                           fontWeight: FontWeight.w600,
                           color:
                               isMe
-                                  ? theme.colorScheme.onPrimary.withValues(
-                                    alpha: 0.9,
-                                  )
+                                  ? theme.colorScheme.onPrimary.withOpacity(0.9)
                                   : theme.colorScheme.primary,
                           fontSize: 12,
                         ),
@@ -997,9 +919,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.secondary.withValues(
-                              alpha: 0.1,
-                            ),
+                            color: theme.colorScheme.secondary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -1114,7 +1034,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                         style: TextStyle(
                           color:
                               isMe
-                                  ? theme.colorScheme.onPrimary
+                                  ? theme.colorScheme.onPrimary.withOpacity(0.9)
                                   : isExpense
                                   ? theme.colorScheme.onSurface
                                   : isPayment
@@ -1130,7 +1050,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                       alignment:
                           isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Text(
-                        _formatMessageTime(message['created_at']),
+                        DateFormatter.formatMessageTime(message['created_at']),
                         style: TextStyle(
                           fontSize: 11,
                           color:
@@ -1345,46 +1265,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
   }
 
   Widget _buildDaySeparator(String text, ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 1,
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Text(
-                text,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              height: 1,
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-            ),
-          ),
-        ],
-      ),
-    );
+    return DateFormatter.buildDaySeparator(text, theme);
   }
 
   void _showGroupDetailsModal() {
@@ -1448,7 +1329,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                   const SizedBox(height: 4),
                   Center(
                     child: Text(
-                      'Created on ${_formatDate(groupCreatedAt)}',
+                      'Created on ${DateFormatter.formatDate(groupCreatedAt)}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
