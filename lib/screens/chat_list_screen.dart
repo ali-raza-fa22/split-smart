@@ -10,6 +10,7 @@ import 'stats_screen.dart';
 import 'all_expenses_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
+import 'verify_email_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -34,6 +35,7 @@ class _ChatListScreenState extends State<ChatListScreen>
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _checkEmailVerification();
     _loadData();
     _setupRealtimeSubscription();
   }
@@ -117,6 +119,23 @@ class _ChatListScreenState extends State<ChatListScreen>
       }
     } catch (e) {
       // Handle error silently
+    }
+  }
+
+  Future<void> _checkEmailVerification() async {
+    // Check if user's email is verified
+    final isVerified = await _authService.isCurrentUserEmailVerified();
+    if (!isVerified && mounted) {
+      // Redirect to email verification screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => VerifyEmailScreen(
+                email: _authService.currentUser?.email ?? '',
+              ),
+        ),
+      );
     }
   }
 

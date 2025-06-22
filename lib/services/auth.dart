@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
+import '../screens/verify_email_screen.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -103,6 +105,21 @@ class AuthService {
   // Check if email is confirmed
   bool get isEmailConfirmed => currentUser?.emailConfirmedAt != null;
 
+  // Check if current user's email is verified (with session refresh)
+  Future<bool> isCurrentUserEmailVerified() async {
+    try {
+      if (currentUser == null) return false;
+
+      // Refresh the session to get the latest email confirmation status
+      await _supabase.auth.refreshSession();
+
+      // Check if email is confirmed after refresh
+      return _supabase.auth.currentUser?.emailConfirmedAt != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Get user profile
   Future<Map<String, dynamic>?> getUserProfile() async {
     try {
@@ -186,7 +203,7 @@ class AuthService {
     }
   }
 
-  // Verify OTP for password reset and update password
+  // Reset password with OTP and update password
   Future<void> resetPasswordWithOTP({
     required String email,
     required String token,
@@ -211,6 +228,36 @@ class AuthService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  // Check if user needs email verification and handle redirect
+  Future<bool> checkAndHandleEmailVerification(BuildContext context) async {
+    try {
+      if (currentUser == null) return true; // No user logged in, allow access
+
+      // Check if email is verified
+      final isVerified = await isCurrentUserEmailVerified();
+
+      if (!isVerified) {
+        // Email not verified, redirect to verification screen
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      VerifyEmailScreen(email: currentUser?.email ?? ''),
+            ),
+          );
+        }
+        return false; // Don't allow access
+      }
+
+      return true; // Email verified, allow access
+    } catch (e) {
+      // On error, allow access to prevent blocking the user
+      return true;
     }
   }
 }

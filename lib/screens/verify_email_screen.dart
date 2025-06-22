@@ -17,6 +17,24 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _isResending = false;
+  String? _userEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeEmail();
+  }
+
+  void _initializeEmail() {
+    // If email is provided in widget, use it
+    if (widget.email.isNotEmpty) {
+      _userEmail = widget.email;
+    } else {
+      // Otherwise, get email from current user
+      final currentUser = _authService.currentUser;
+      _userEmail = currentUser?.email;
+    }
+  }
 
   @override
   void dispose() {
@@ -26,14 +44,25 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   Future<void> _verifyOTP() async {
     if (_formKey.currentState!.validate()) {
+      if (_userEmail == null || _userEmail!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Email not available. Please login again.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
       try {
         await _authService.verifyOTP(
-          email: widget.email,
+          email: _userEmail!,
           token: _otpController.text,
         );
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
+          // Navigate to chat list after successful verification
+          Navigator.pushReplacementNamed(context, '/chat_list');
         }
       } catch (e) {
         if (mounted) {
@@ -53,9 +82,19 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   Future<void> _resendOTP() async {
+    if (_userEmail == null || _userEmail!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Email not available. Please login again.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isResending = true);
     try {
-      await _authService.sendOTP(widget.email);
+      await _authService.sendOTP(_userEmail!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -86,6 +125,49 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    // If no email is available, show error message
+    if (_userEmail == null || _userEmail!.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Verify Email')),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 80, color: colorScheme.error),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Email Not Available',
+                    style: textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Unable to verify your email. Please login again.',
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed:
+                        () => Navigator.pushReplacementNamed(context, '/login'),
+                    child: const Text('Go to Login'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Verify Email')),
@@ -125,7 +207,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'We sent a 6-digit code to ${widget.email}',
+                      'We sent a 6-digit code to $_userEmail',
                       textAlign: TextAlign.center,
                       style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -198,6 +280,16 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                 'Didn\'t receive the code? Resend',
                                 style: TextStyle(color: colorScheme.primary),
                               ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed:
+                          () =>
+                              Navigator.pushReplacementNamed(context, '/login'),
+                      child: Text(
+                        'Back to Login',
+                        style: TextStyle(color: colorScheme.primary),
+                      ),
                     ),
                     const SizedBox(height: 40),
                   ],
