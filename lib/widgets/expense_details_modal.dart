@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import 'csv_export_button.dart';
 
 class ExpenseDetailsModal extends StatefulWidget {
   final Map<String, dynamic> expenseData;
@@ -219,6 +220,20 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+              ),
+            ),
+            // Save button
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: CsvExportButton(
+                groupId: widget.expenseData['group_id'],
+                groupName: widget.expenseData['group_name'] ?? 'Group',
+                expensesCount: 1, // At least this expense exists
+                customIcon: Icons.download,
+                isCompact: true,
+                onExportComplete: () {
+                  // Optional: Add any completion logic here
+                },
               ),
             ),
             Container(

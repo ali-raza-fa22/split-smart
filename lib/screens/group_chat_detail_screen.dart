@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/chat_service.dart';
 import '../utils/date_formatter.dart';
 import '../widgets/expense_details_modal.dart';
+import '../widgets/csv_export_button.dart';
 import 'group_management_screen.dart';
 import 'add_expense_screen.dart';
 import 'expenses_screen.dart';
@@ -1356,6 +1357,17 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+                // Export CSV Button
+                if (_expensesCount > 0)
+                  Container(
+                    width: double.infinity,
+                    child: CsvExportButton(
+                      groupId: widget.groupId,
+                      groupName: _currentGroupName,
+                      expensesCount: _expensesCount,
+                    ),
+                  ),
                 const SizedBox(height: 24),
                 Text(
                   'Members',

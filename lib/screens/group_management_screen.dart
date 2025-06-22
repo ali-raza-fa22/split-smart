@@ -230,8 +230,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Remove'),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Remove'),
               ),
             ],
           ),
