@@ -1,83 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/auth.dart';
+import 'reset_password_screen.dart';
 
-class VerifyEmailScreen extends StatefulWidget {
-  final String email;
-
-  const VerifyEmailScreen({super.key, required this.email});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController();
+  final _emailController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
-  bool _isResending = false;
 
   @override
   void dispose() {
-    _otpController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  Future<void> _verifyOTP() async {
+  Future<void> _sendOTP() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
-        await _authService.verifyOTP(
-          email: widget.email,
-          token: _otpController.text,
-        );
+        await _authService.sendPasswordResetOTP(_emailController.text.trim());
+
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'OTP sent to your email. Please check your inbox.',
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+
+          // Navigate to reset password screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      ResetPasswordScreen(email: _emailController.text.trim()),
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
+          String errorMessage = e.toString();
+          if (errorMessage.contains('User not found')) {
+            errorMessage = 'No account found with this email address.';
+          } else if (errorMessage.contains('Too many requests')) {
+            errorMessage = 'Too many attempts. Please try again later.';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString()),
+              content: Text(errorMessage),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
       } finally {
         if (mounted) {
-          setState(() => _isLoading = false);
+          setState(() {
+            _isLoading = false;
+          });
         }
-      }
-    }
-  }
-
-  Future<void> _resendOTP() async {
-    setState(() => _isResending = true);
-    try {
-      await _authService.sendOTP(widget.email);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Verification code has been resent to your email',
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isResending = false);
       }
     }
   }
@@ -88,7 +83,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
+      appBar: AppBar(
+        title: const Text('Forgot Password'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -108,61 +109,57 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    // App Logo/Icon
                     Icon(
-                      Icons.verified_user,
+                      Icons.lock_reset,
                       size: 80,
                       color: colorScheme.primary,
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Enter Verification Code',
+                      'Reset Your Password',
                       style: textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Text(
-                      'We sent a 6-digit code to ${widget.email}',
-                      textAlign: TextAlign.center,
+                      'Enter your email address and we\'ll send you a one-time password to reset your password.',
                       style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
-                      controller: _otpController,
+                      controller: _emailController,
                       decoration: InputDecoration(
-                        labelText: 'Verification Code',
-                        hintText: 'Enter 6-digit code',
+                        labelText: 'Email',
+                        hintText: 'Enter your email address',
                         prefixIcon: Icon(
-                          Icons.security,
+                          Icons.email,
                           color: colorScheme.primary,
                         ),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
-                      ],
+                      keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter the verification code';
+                          return 'Please enter your email';
                         }
-                        if (value.length != 6) {
-                          return 'Code must be 6 digits';
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(value)) {
+                          return 'Please enter a valid email address';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
-                      width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _verifyOTP,
+                        onPressed: _isLoading ? null : _sendOTP,
                         child:
                             _isLoading
                                 ? SizedBox(
@@ -176,7 +173,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                   ),
                                 )
                                 : Text(
-                                  'Verify',
+                                  'Send OTP',
                                   style: textTheme.titleMedium?.copyWith(
                                     color: colorScheme.onPrimary,
                                   ),
@@ -185,19 +182,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: _isResending ? null : _resendOTP,
-                      child:
-                          _isResending
-                              ? Text(
-                                'Resending...',
-                                style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              )
-                              : Text(
-                                'Didn\'t receive the code? Resend',
-                                style: TextStyle(color: colorScheme.primary),
-                              ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Back to Login',
+                        style: TextStyle(color: colorScheme.primary),
+                      ),
                     ),
                     const SizedBox(height: 40),
                   ],

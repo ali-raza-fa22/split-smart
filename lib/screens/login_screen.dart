@@ -50,9 +50,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(e.toString())));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
           }
         }
       } finally {
@@ -65,6 +68,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
       body: Padding(
@@ -74,11 +80,32 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // App Logo/Icon
+              Icon(Icons.account_circle, size: 80, color: colorScheme.primary),
+              const SizedBox(height: 24),
+              Text(
+                'Welcome Back',
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sign in to continue',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
+                  hintText: 'Enter your email address',
+                  prefixIcon: Icon(Icons.email, color: colorScheme.primary),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -91,9 +118,10 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
+                  hintText: 'Enter your password',
+                  prefixIcon: Icon(Icons.lock, color: colorScheme.primary),
                 ),
                 obscureText: true,
                 validator: (value) {
@@ -103,6 +131,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/forgot_password');
+                  },
+                  child: Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: colorScheme.primary),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -111,8 +152,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _login,
                   child:
                       _isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Login'),
+                          ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            'Login',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onPrimary,
+                            ),
+                          ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -120,7 +175,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.pushNamed(context, '/register');
                 },
-                child: const Text('Don\'t have an account? Register'),
+                child: Text(
+                  'Don\'t have an account? Register',
+                  style: TextStyle(color: colorScheme.primary),
+                ),
               ),
             ],
           ),

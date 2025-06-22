@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/chat_list_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -130,6 +131,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/chat_list': (context) => const ChatListScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
       },
     );
   }

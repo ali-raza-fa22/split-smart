@@ -169,4 +169,41 @@ class AuthService {
       return false;
     }
   }
+
+  // Send OTP for password reset
+  Future<void> sendPasswordResetOTP(String email) async {
+    try {
+      await _supabase.auth.signInWithOtp(email: email, emailRedirectTo: null);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Verify OTP for password reset and update password
+  Future<void> resetPasswordWithOTP({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      // First verify the OTP which signs the user in
+      final response = await _supabase.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: OtpType.magiclink,
+      );
+
+      if (response.user != null) {
+        // Update the password
+        await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+
+        // Sign out the user to ensure they login with new password
+        await _supabase.auth.signOut();
+      } else {
+        throw Exception('Failed to verify OTP');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

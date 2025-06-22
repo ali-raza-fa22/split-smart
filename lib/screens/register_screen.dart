@@ -46,9 +46,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
         }
       } finally {
         if (mounted) {
@@ -60,6 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Register')),
       body: SingleChildScrollView(
@@ -69,16 +75,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Create an Account',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+              const SizedBox(height: 40),
+              // App Logo/Icon
+              Icon(Icons.person_add, size: 80, color: colorScheme.primary),
               const SizedBox(height: 24),
+              Text(
+                'Create an Account',
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Join Split Smart today',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
+                  hintText: 'Enter your email address',
+                  prefixIcon: Icon(Icons.email, color: colorScheme.primary),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -91,9 +114,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
+                  hintText: 'Enter your password',
+                  prefixIcon: Icon(Icons.lock, color: colorScheme.primary),
                 ),
                 obscureText: true,
                 validator: (value) {
@@ -109,9 +133,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Confirm Password',
-                  border: OutlineInputBorder(),
+                  hintText: 'Confirm your password',
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: colorScheme.primary,
+                  ),
                 ),
                 obscureText: true,
                 validator: (value) {
@@ -132,8 +160,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading ? null : _register,
                   child:
                       _isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Register'),
+                          ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            'Register',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onPrimary,
+                            ),
+                          ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -141,8 +183,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Already have an account? Login'),
+                child: Text(
+                  'Already have an account? Login',
+                  style: TextStyle(color: colorScheme.primary),
+                ),
               ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
