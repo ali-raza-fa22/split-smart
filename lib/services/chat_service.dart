@@ -595,6 +595,24 @@ class ChatService {
                   .limit(1)
                   .maybeSingle();
 
+          Map<String, dynamic>? lastMessageWithSender;
+          if (lastMessage != null) {
+            // Fetch sender's profile
+            final senderProfile =
+                await _supabase
+                    .from('profiles')
+                    .select('display_name')
+                    .eq('id', lastMessage['sender_id'])
+                    .maybeSingle();
+            lastMessageWithSender = {
+              ...lastMessage,
+              'sender_display_name':
+                  senderProfile != null
+                      ? senderProfile['display_name']
+                      : 'Unknown',
+            };
+          }
+
           // Get all members for this group
           final members = await getGroupMembers(group['id']);
 
@@ -611,7 +629,7 @@ class ChatService {
 
           groupsWithDetails.add({
             ...group,
-            'last_message': lastMessage,
+            'last_message': lastMessageWithSender,
             'member_count': members.length,
             'member_names': memberNames,
           });

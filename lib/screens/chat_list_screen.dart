@@ -287,6 +287,21 @@ class _ChatListScreenState extends State<ChatListScreen>
           final user = _users[index];
           final lastMessage = user['last_message_content'];
           final lastMessageTime = user['last_message_created_at'];
+          final lastMessageSenderId = user['last_message_sender_id'];
+          final lastMessageSenderName =
+              user['last_message_sender_display_name'];
+          final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+
+          String subtitle;
+          if (lastMessage != null) {
+            final senderName =
+                lastMessageSenderId == currentUserId
+                    ? 'You'
+                    : (lastMessageSenderName ?? 'Unknown');
+            subtitle = '$senderName: $lastMessage';
+          } else {
+            subtitle = 'No messages yet';
+          }
 
           return ListTile(
             leading: _buildUserAvatar(
@@ -296,7 +311,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             ),
             title: Text(user['display_name'] ?? 'Unknown User'),
             subtitle: Text(
-              lastMessage ?? 'No messages yet',
+              subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -350,7 +365,9 @@ class _ChatListScreenState extends State<ChatListScreen>
           if (lastMessage != null) {
             final currentUserId = Supabase.instance.client.auth.currentUser?.id;
             final senderName =
-                lastMessage['sender_id'] == currentUserId ? 'You' : 'Someone';
+                lastMessage['sender_id'] == currentUserId
+                    ? 'You'
+                    : (lastMessage['sender_display_name'] ?? 'Unknown');
             subtitle = '$senderName: ${lastMessage['content']}';
           } else {
             subtitle = 'No messages yet';
