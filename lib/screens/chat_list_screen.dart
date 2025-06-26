@@ -13,6 +13,7 @@ import 'dart:async';
 import 'verify_email_screen.dart';
 import 'group_management_screen.dart';
 import '../widgets/edit_group_name_dialog.dart';
+import '../widgets/unread_badge.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -27,10 +28,14 @@ class _ChatListScreenState extends State<ChatListScreen>
   final AuthService _authService = AuthService();
   List<Map<String, dynamic>> _users = [];
   List<Map<String, dynamic>> _groups = [];
+  Map<String, int> _directUnreadCounts = {};
+  Map<String, int> _groupUnreadCounts = {};
   bool _isLoading = true;
   late TabController _tabController;
   StreamSubscription? _groupMessagesSubscription;
   StreamSubscription? _directMessagesSubscription;
+  StreamSubscription? _messageReadStatusSubscription;
+  StreamSubscription? _groupMessageReadStatusSubscription;
   Timer? _debounceTimer;
 
   @override
@@ -51,6 +56,8 @@ class _ChatListScreenState extends State<ChatListScreen>
     _tabController.dispose();
     _groupMessagesSubscription?.cancel();
     _directMessagesSubscription?.cancel();
+    _messageReadStatusSubscription?.cancel();
+    _groupMessageReadStatusSubscription?.cancel();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -60,7 +67,7 @@ class _ChatListScreenState extends State<ChatListScreen>
     super.didChangeAppLifecycleState(state);
     // Only refresh when app becomes active to ensure data is current
     if (state == AppLifecycleState.resumed && mounted) {
-      _loadData();
+      _loadData(); // This already includes unread counts
     }
   }
 
@@ -95,6 +102,36 @@ class _ChatListScreenState extends State<ChatListScreen>
         // Handle error silently
       },
     );
+
+    // Listen for message read status changes
+    _messageReadStatusSubscription = _chatService
+        .getMessageReadStatusStream()
+        .listen(
+          (_) {
+            // When a message read status changes, refresh the users list immediately
+            if (mounted) {
+              _refreshUsersOnly();
+            }
+          },
+          onError: (error) {
+            // Handle error silently
+          },
+        );
+
+    // Listen for group message read status changes
+    _groupMessageReadStatusSubscription = _chatService
+        .getGroupMessageReadStatusStream()
+        .listen(
+          (_) {
+            // When a group message read status changes, refresh the groups list immediately
+            if (mounted) {
+              _refreshGroupsOnly();
+            }
+          },
+          onError: (error) {
+            // Handle error silently
+          },
+        );
   }
 
   Future<void> _loadData() async {
@@ -106,10 +143,25 @@ class _ChatListScreenState extends State<ChatListScreen>
     try {
       final users = await _chatService.getUsersWithLastMessage();
       final groups = await _chatService.getUserGroupsWithDetails();
+      // Fetch unread counts for direct chats
+      final directUnreadCounts = <String, int>{};
+      for (final user in users) {
+        final count = await _chatService.getUnreadDirectMessageCount(
+          user['id'],
+        );
+        directUnreadCounts[user['id']] = count;
+      }
+      // Fetch unread counts for group chats
+      final groupIds = groups.map((g) => g['id'] as String).toList();
+      final groupUnreadCounts = await _chatService.getUnreadCountsForAllGroups(
+        groupIds,
+      );
       if (mounted) {
         setState(() {
           _users = users;
           _groups = groups;
+          _directUnreadCounts = directUnreadCounts;
+          _groupUnreadCounts = groupUnreadCounts;
           _isLoading = false;
         });
       }
@@ -128,9 +180,15 @@ class _ChatListScreenState extends State<ChatListScreen>
   Future<void> _refreshGroupsOnly() async {
     try {
       final groups = await _chatService.getUserGroupsWithDetails();
+      // Also refresh unread counts for groups
+      final groupIds = groups.map((g) => g['id'] as String).toList();
+      final groupUnreadCounts = await _chatService.getUnreadCountsForAllGroups(
+        groupIds,
+      );
       if (mounted) {
         setState(() {
           _groups = groups;
+          _groupUnreadCounts = groupUnreadCounts;
         });
       }
     } catch (e) {
@@ -141,9 +199,18 @@ class _ChatListScreenState extends State<ChatListScreen>
   Future<void> _refreshUsersOnly() async {
     try {
       final users = await _chatService.getUsersWithLastMessage();
+      // Also refresh unread counts for direct chats
+      final directUnreadCounts = <String, int>{};
+      for (final user in users) {
+        final count = await _chatService.getUnreadDirectMessageCount(
+          user['id'],
+        );
+        directUnreadCounts[user['id']] = count;
+      }
       if (mounted) {
         setState(() {
           _users = users;
+          _directUnreadCounts = directUnreadCounts;
         });
       }
     } catch (e) {
@@ -181,7 +248,7 @@ class _ChatListScreenState extends State<ChatListScreen>
         title: const Text('SplitSmart'),
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) {
+            onSelected: (value) async {
               switch (value) {
                 case 'profile':
                   Navigator.push(
@@ -257,7 +324,6 @@ class _ChatListScreenState extends State<ChatListScreen>
                       ],
                     ),
                   ),
-                  const PopupMenuDivider(),
                   const PopupMenuItem(
                     value: 'logout',
                     child: Row(
@@ -326,6 +392,7 @@ class _ChatListScreenState extends State<ChatListScreen>
           final lastMessageSenderName =
               user['last_message_sender_display_name'];
           final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+          final unreadCount = _directUnreadCounts[user['id']] ?? 0;
 
           String subtitle;
           if (lastMessage != null) {
@@ -350,18 +417,29 @@ class _ChatListScreenState extends State<ChatListScreen>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing:
-                lastMessageTime != null
-                    ? Text(
-                      DateFormatter.formatChatListTimestamp(lastMessageTime),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    )
-                    : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (unreadCount > 0) ...[
+                  const SizedBox(width: 8),
+                  UnreadBadge(
+                    count: unreadCount,
+                    color: Theme.of(context).colorScheme.errorContainer,
+                  ),
+                ],
+                const SizedBox(width: 8),
+                if (lastMessageTime != null)
+                  Text(
+                    DateFormatter.formatChatListTimestamp(lastMessageTime),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+              ],
+            ),
             onTap: () async {
               await Navigator.push(
                 context,
@@ -373,9 +451,14 @@ class _ChatListScreenState extends State<ChatListScreen>
                       ),
                 ),
               );
-              // Refresh data when returning from chat to show latest messages
+              // Mark messages as read and get updated count immediately
               if (mounted) {
-                _refreshUsersOnly();
+                final count = await _chatService.markMessagesAsReadAndGetCount(
+                  user['id'],
+                );
+                setState(() {
+                  _directUnreadCounts[user['id']] = count;
+                });
               }
             },
           );
@@ -398,6 +481,7 @@ class _ChatListScreenState extends State<ChatListScreen>
         itemBuilder: (context, index) {
           final group = _groups[index];
           final lastMessage = group['last_message'];
+          final unreadCount = _groupUnreadCounts[group['id']] ?? 0;
 
           // Create subtitle with last message and sender
           String subtitle = '';
@@ -434,20 +518,27 @@ class _ChatListScreenState extends State<ChatListScreen>
                         ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
-            trailing:
-                lastMessage != null
-                    ? Text(
-                      DateFormatter.formatChatListTimestamp(
-                        lastMessage['created_at'],
-                      ),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    )
-                    : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (lastMessage != null)
+                  Text(
+                    DateFormatter.formatChatListTimestamp(
+                      lastMessage['created_at'],
+                    ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                if (unreadCount > 0) ...[
+                  const SizedBox(width: 8),
+                  UnreadBadge(count: unreadCount),
+                ],
+              ],
+            ),
             onTap: () async {
               await Navigator.push(
                 context,
@@ -459,9 +550,13 @@ class _ChatListScreenState extends State<ChatListScreen>
                       ),
                 ),
               );
-              // Refresh data when returning from chat to show latest messages
+              // Mark group messages as read and get updated count immediately
               if (mounted) {
-                _refreshGroupsOnly();
+                final count = await _chatService
+                    .markGroupMessagesAsReadAndGetCount(group['id']);
+                setState(() {
+                  _groupUnreadCounts[group['id']] = count;
+                });
               }
             },
             onLongPress: () async {

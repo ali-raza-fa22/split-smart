@@ -277,7 +277,7 @@ class ChatService {
     }
   }
 
-  // Mark messages as read
+  // Mark messages as read (backward compatibility)
   Future<void> markMessagesAsRead(String senderId) async {
     try {
       await _supabase
@@ -289,6 +289,180 @@ class ChatService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Mark messages as read and return updated unread count
+  Future<int> markMessagesAsReadAndGetCount(String senderId) async {
+    try {
+      final result = await _supabase
+          .from('messages')
+          .update({'is_read': true})
+          .eq('sender_id', senderId)
+          .eq('receiver_id', _supabase.auth.currentUser!.id)
+          .eq('is_read', false);
+
+      // Return the updated unread count immediately
+      final count = await getUnreadDirectMessageCount(senderId);
+      return count;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Mark group messages as read and return updated unread count
+  Future<int> markGroupMessagesAsReadAndGetCount(String groupId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser!.id;
+
+      // Get all messages in the group not sent by current user
+      final allMessages = await _supabase
+          .from('group_messages')
+          .select('id')
+          .eq('group_id', groupId)
+          .not('sender_id', 'eq', currentUserId);
+
+      if (allMessages.isNotEmpty) {
+        final messageIds = allMessages.map((m) => m['id'] as String).toList();
+
+        // Get existing read receipts for these messages
+        final existingReads = await _supabase
+            .from('group_message_reads')
+            .select('message_id')
+            .eq('user_id', currentUserId)
+            .inFilter('message_id', messageIds);
+
+        final existingReadMessageIds =
+            existingReads.map((r) => r['message_id'] as String).toSet();
+
+        // Only insert read receipts for messages that don't already have them
+        final unreadMessageIds =
+            messageIds
+                .where((id) => !existingReadMessageIds.contains(id))
+                .toList();
+
+        if (unreadMessageIds.isNotEmpty) {
+          // Create read records for unread messages only
+          final inserts =
+              unreadMessageIds
+                  .map(
+                    (messageId) => {
+                      'message_id': messageId,
+                      'user_id': currentUserId,
+                      'read_at': DateTime.now().toUtc().toIso8601String(),
+                    },
+                  )
+                  .toList();
+
+          await _supabase.from('group_message_reads').insert(inserts);
+        }
+      }
+
+      // Return the updated unread count immediately
+      final count = await getUnreadGroupMessageCount(groupId);
+      return count;
+    } catch (e) {
+      // Handle error silently and return current count
+      return await getUnreadGroupMessageCount(groupId);
+    }
+  }
+
+  // Mark group messages as read (backward compatibility)
+  Future<void> markGroupMessagesAsRead(String groupId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser!.id;
+
+      // Get all messages in the group not sent by current user
+      final allMessages = await _supabase
+          .from('group_messages')
+          .select('id')
+          .eq('group_id', groupId)
+          .not('sender_id', 'eq', currentUserId);
+
+      if (allMessages.isNotEmpty) {
+        final messageIds = allMessages.map((m) => m['id'] as String).toList();
+
+        // Get existing read receipts for these messages
+        final existingReads = await _supabase
+            .from('group_message_reads')
+            .select('message_id')
+            .eq('user_id', currentUserId)
+            .inFilter('message_id', messageIds);
+
+        final existingReadMessageIds =
+            existingReads.map((r) => r['message_id'] as String).toSet();
+
+        // Only insert read receipts for messages that don't already have them
+        final unreadMessageIds =
+            messageIds
+                .where((id) => !existingReadMessageIds.contains(id))
+                .toList();
+
+        if (unreadMessageIds.isNotEmpty) {
+          // Create read records for unread messages only
+          final inserts =
+              unreadMessageIds
+                  .map(
+                    (messageId) => {
+                      'message_id': messageId,
+                      'user_id': currentUserId,
+                      'read_at': DateTime.now().toUtc().toIso8601String(),
+                    },
+                  )
+                  .toList();
+
+          await _supabase.from('group_message_reads').insert(inserts);
+        }
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  // Real-time stream for message read status changes
+  Stream<void> getMessageReadStatusStream() {
+    final userId = _supabase.auth.currentUser!.id;
+    return _supabase
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('receiver_id', userId)
+        .map((event) {
+          // Check if any messages were marked as read
+          final hasReadStatusChange = event.any((message) {
+            final isRead = message['is_read'] ?? false;
+            final receiverId = message['receiver_id'] as String;
+            // Only trigger if message is marked as read and is for current user
+            return isRead && receiverId == userId;
+          });
+
+          // Return a value only if there's a read status change
+          if (hasReadStatusChange) {
+            return true;
+          }
+          return null;
+        })
+        .where((event) => event != null) // Only emit non-null events
+        .map((_) => null) // Convert to void stream
+        .handleError((error) {
+          // Handle errors silently to prevent stream from breaking
+          return;
+        });
+  }
+
+  // Real-time stream for group message read status changes
+  Stream<void> getGroupMessageReadStatusStream() {
+    final userId = _supabase.auth.currentUser!.id;
+    return _supabase
+        .from('group_message_reads')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .map((event) {
+          // Any new read record should trigger an update
+          return;
+        })
+        .handleError((error) {
+          // Handle errors silently to prevent stream from breaking
+          return;
+        });
   }
 
   // Get unread message count
@@ -1631,5 +1805,107 @@ class ChatService {
 
           return;
         });
+  }
+
+  // Get unread message count for a direct chat with another user
+  Future<int> getUnreadDirectMessageCount(String otherUserId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser!.id;
+      final response = await _supabase
+          .from('messages')
+          .select('id, is_deleted, deleted_for_users')
+          .eq('receiver_id', currentUserId)
+          .eq('sender_id', otherUserId)
+          .eq('is_read', false);
+
+      final nonDeletedMessages =
+          response.where((message) {
+            final isDeleted = message['is_deleted'] ?? false;
+            final deletedForUsers = List<String>.from(
+              message['deleted_for_users'] ?? [],
+            );
+
+            // Exclude messages deleted for everyone
+            if (isDeleted) return false;
+
+            // Exclude messages deleted for current user
+            if (deletedForUsers.contains(currentUserId)) return false;
+
+            return true;
+          }).toList();
+
+      return nonDeletedMessages.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Get unread message count for a group
+  Future<int> getUnreadGroupMessageCount(String groupId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser!.id;
+      // Get all group messages for this group
+      final messages = await _supabase
+          .from('group_messages')
+          .select('id, is_deleted, deleted_for_users, sender_id')
+          .eq('group_id', groupId)
+          .order('created_at', ascending: true);
+
+      if (messages.isEmpty) return 0;
+
+      // Filter out messages sent by current user and deleted messages
+      final relevantMessages =
+          messages.where((message) {
+            final isDeleted = message['is_deleted'] ?? false;
+            final deletedForUsers = List<String>.from(
+              message['deleted_for_users'] ?? [],
+            );
+            final senderId = message['sender_id'] as String;
+
+            // Exclude messages sent by current user
+            if (senderId == currentUserId) return false;
+
+            // Exclude messages deleted for everyone
+            if (isDeleted) return false;
+
+            // Exclude messages deleted for current user
+            if (deletedForUsers.contains(currentUserId)) return false;
+
+            return true;
+          }).toList();
+
+      if (relevantMessages.isEmpty) return 0;
+
+      final messageIds =
+          relevantMessages.map((m) => m['id'] as String).toList();
+
+      // Get all read receipts for this user in this group
+      final reads = await _supabase
+          .from('group_message_reads')
+          .select('message_id')
+          .eq('user_id', currentUserId)
+          .inFilter('message_id', messageIds);
+
+      final readMessageIds =
+          reads.map((r) => r['message_id'] as String).toSet();
+
+      // Unread = messages not in readMessageIds
+      final unreadCount =
+          messageIds.where((id) => !readMessageIds.contains(id)).length;
+      return unreadCount;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Get unread counts for all groups for the current user
+  Future<Map<String, int>> getUnreadCountsForAllGroups(
+    List<String> groupIds,
+  ) async {
+    final Map<String, int> result = {};
+    for (final groupId in groupIds) {
+      result[groupId] = await getUnreadGroupMessageCount(groupId);
+    }
+    return result;
   }
 }

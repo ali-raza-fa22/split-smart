@@ -62,6 +62,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 curve: Curves.easeOut,
               );
             }
+            // Mark messages as read in real-time
+            _markMessagesAsRead();
           }
         }, onError: (error) {});
   }
@@ -74,6 +76,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           _messages = messages;
           _isLoading = false;
         });
+        // Mark messages as read after loading
+        _markMessagesAsRead();
       }
     } catch (e) {
       if (mounted) {
@@ -86,7 +90,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> _markMessagesAsRead() async {
     try {
-      await _chatService.markMessagesAsRead(widget.otherUserId);
+      await _chatService.markMessagesAsReadAndGetCount(widget.otherUserId);
     } catch (e) {
       // Handle error silently
     }

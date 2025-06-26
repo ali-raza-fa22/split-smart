@@ -116,6 +116,8 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
         setState(() {
           _currentMessages = messages;
         });
+        // Mark group messages as read after loading
+        _markGroupMessagesAsRead();
       }
     } catch (e) {
       // Handle error silently
@@ -131,6 +133,8 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
             setState(() {
               _currentMessages = messages;
             });
+            // Mark group messages as read in real-time
+            _markGroupMessagesAsRead();
           }
         });
   }
@@ -1447,5 +1451,13 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _markGroupMessagesAsRead() async {
+    try {
+      await _chatService.markGroupMessagesAsRead(widget.groupId);
+    } catch (e) {
+      // Handle error silently
+    }
   }
 }
