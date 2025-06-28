@@ -18,16 +18,12 @@ class _BalanceScreenState extends State<BalanceScreen>
 
   Map<String, dynamic>? _userBalance;
   Map<String, dynamic>? _balanceStats;
-  bool _isLoading = true;
-  bool _isLoanSectionExpanded = false;
   List<Map<String, dynamic>> _defaultBalanceTitles = [];
-  String? _selectedBalanceTitle;
-  late TabController _tabController;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -36,7 +32,6 @@ class _BalanceScreenState extends State<BalanceScreen>
     _amountController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -130,7 +125,6 @@ class _BalanceScreenState extends State<BalanceScreen>
     _amountController.clear();
     _titleController.clear();
     _descriptionController.clear();
-    _selectedBalanceTitle = null;
 
     showDialog(
       context: context,
@@ -195,7 +189,6 @@ class _BalanceScreenState extends State<BalanceScreen>
     _amountController.clear();
     _titleController.clear();
     _descriptionController.clear();
-    _selectedBalanceTitle = null;
 
     // Get current outstanding loan amount
     double outstandingLoan = 0.0;
@@ -218,7 +211,6 @@ class _BalanceScreenState extends State<BalanceScreen>
         final localDescriptionController = TextEditingController(
           text: _descriptionController.text,
         );
-        String? localSelectedTitle = _selectedBalanceTitle;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -281,81 +273,13 @@ class _BalanceScreenState extends State<BalanceScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value: localSelectedTitle,
+                      TextField(
+                        controller: localTitleController,
                         decoration: const InputDecoration(
                           labelText: 'Title',
-                          border: OutlineInputBorder(),
+                          hintText: 'e.g., Loan Repayment',
                         ),
-                        hint: const Text('Select a title or type custom'),
-                        isExpanded: true,
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: 'Loan Repayment',
-                            child: Row(
-                              children: [
-                                Icon(Icons.payment, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(child: Text('Loan Repayment')),
-                              ],
-                            ),
-                          ),
-                          const DropdownMenuItem<String>(
-                            value: 'Partial Loan Repayment',
-                            child: Row(
-                              children: [
-                                Icon(Icons.account_balance_wallet, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(child: Text('Partial Loan Repayment')),
-                              ],
-                            ),
-                          ),
-                          const DropdownMenuItem<String>(
-                            value: 'Full Loan Repayment',
-                            child: Row(
-                              children: [
-                                Icon(Icons.check_circle, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(child: Text('Full Loan Repayment')),
-                              ],
-                            ),
-                          ),
-                          const DropdownMenuItem<String>(
-                            value: 'custom',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(child: Text('Custom title...')),
-                              ],
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            localSelectedTitle = value;
-                            if (value != null && value != 'custom') {
-                              localTitleController.text = value;
-                              if (value == 'Full Loan Repayment' &&
-                                  outstandingLoan > 0) {
-                                localAmountController.text = outstandingLoan
-                                    .toStringAsFixed(2);
-                              }
-                            } else {
-                              localTitleController.clear();
-                            }
-                          });
-                        },
                       ),
-                      const SizedBox(height: 16),
-                      if (localSelectedTitle == 'custom')
-                        TextField(
-                          controller: localTitleController,
-                          decoration: const InputDecoration(
-                            labelText: 'Custom Title',
-                            hintText: 'e.g., Loan Repayment',
-                          ),
-                        ),
                       TextField(
                         controller: localDescriptionController,
                         decoration: const InputDecoration(
@@ -377,13 +301,9 @@ class _BalanceScreenState extends State<BalanceScreen>
                   onPressed: () {
                     // Copy local values to main controllers before submit
                     _amountController.text = localAmountController.text;
-                    _titleController.text =
-                        localSelectedTitle == 'custom'
-                            ? localTitleController.text
-                            : (localSelectedTitle ?? '');
+                    _titleController.text = localTitleController.text;
                     _descriptionController.text =
                         localDescriptionController.text;
-                    _selectedBalanceTitle = localSelectedTitle;
                     Navigator.of(context).pop();
                     _repayLoan();
                   },
@@ -401,24 +321,35 @@ class _BalanceScreenState extends State<BalanceScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Balance'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
+      appBar: AppBar(title: const Text('My Balance')),
+      body: RefreshIndicator(
+        onRefresh: _refreshBalanceAndStats,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            const SizedBox(height: 16),
+            _buildBalanceCard(theme),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                padding: const EdgeInsets.only(bottom: 24),
-                children: [
-                  const SizedBox(height: 16),
-                  _buildBalanceCard(theme),
-                  const SizedBox(height: 16),
-                ],
-              ),
     );
+  }
+
+  Future<void> _refreshBalanceAndStats() async {
+    try {
+      await Future.wait([
+        _balanceService.getUserBalance(),
+        _balanceService.getBalanceStatistics(),
+      ]);
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error refreshing balance: $e')));
+      }
+    }
   }
 
   Widget _buildBalanceCard(ThemeData theme) {
@@ -426,8 +357,6 @@ class _BalanceScreenState extends State<BalanceScreen>
         (_userBalance?['current_balance'] as num?)?.toDouble() ?? 0.0;
     final outstandingLoan =
         (_balanceStats?['outstanding_loan'] as num?)?.toDouble() ?? 0.0;
-
-    // Show 0 instead of negative balance
     final displayBalance = currentBalance < 0 ? 0.0 : currentBalance;
 
     return Card(
@@ -443,7 +372,7 @@ class _BalanceScreenState extends State<BalanceScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Current Balance',
+                      'My Wallet',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -480,119 +409,7 @@ class _BalanceScreenState extends State<BalanceScreen>
                   ),
               ],
             ),
-            // Collapsible loan section
-            if (outstandingLoan > 0) ...[
-              const SizedBox(height: 16),
-              ExpansionTile(
-                initiallyExpanded: _isLoanSectionExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    _isLoanSectionExpanded = expanded;
-                  });
-                },
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.credit_card,
-                      color: theme.colorScheme.error,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Loan Details',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(top: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withValues(
-                        alpha: 0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.error.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Outstanding Amount:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              'Rs ${outstandingLoan.toStringAsFixed(2)}',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total Borrowed:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              'Rs ${(_balanceStats?['total_loans'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total Repaid:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              'Rs ${(_balanceStats?['total_repaid'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _showRepayLoanDialog,
-                            icon: const Icon(Icons.payment),
-                            label: const Text('Repay Loan'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.error,
-                              foregroundColor: theme.colorScheme.onError,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
@@ -606,6 +423,20 @@ class _BalanceScreenState extends State<BalanceScreen>
                     ),
                   ),
                 ),
+                if (outstandingLoan > 0) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _showRepayLoanDialog,
+                      icon: const Icon(Icons.payment),
+                      label: const Text('Repay Loan'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
