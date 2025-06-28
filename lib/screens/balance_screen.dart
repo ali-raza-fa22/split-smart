@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/utils/constants.dart';
 import '../services/balance_service.dart';
-import '../utils/date_formatter.dart';
-import 'balance_transaction_detail_screen.dart';
 import '../widgets/add_balance_dialog.dart';
 
 class BalanceScreen extends StatefulWidget {
@@ -20,7 +17,6 @@ class _BalanceScreenState extends State<BalanceScreen>
   final TextEditingController _descriptionController = TextEditingController();
 
   Map<String, dynamic>? _userBalance;
-  List<Map<String, dynamic>> _transactions = [];
   Map<String, dynamic>? _balanceStats;
   bool _isLoading = true;
   bool _isLoanSectionExpanded = false;
@@ -52,16 +48,12 @@ class _BalanceScreenState extends State<BalanceScreen>
     try {
       final results = await Future.wait([
         _balanceService.getUserBalance(),
-        _balanceService.getTransactionHistory(limit: 50),
         _balanceService.getBalanceStatistics(),
         _balanceService.getDefaultBalanceTitles(),
       ]);
 
       setState(() {
         _userBalance = results[0] as Map<String, dynamic>?;
-        _transactions = List<Map<String, dynamic>>.from(
-          results[1] as List<dynamic>,
-        );
         _balanceStats = results[2] as Map<String, dynamic>?;
         _defaultBalanceTitles = List<Map<String, dynamic>>.from(
           results[3] as List<dynamic>,
@@ -424,7 +416,6 @@ class _BalanceScreenState extends State<BalanceScreen>
                   const SizedBox(height: 16),
                   _buildBalanceCard(theme),
                   const SizedBox(height: 16),
-                  _buildRecentTransactionsSection(theme),
                 ],
               ),
     );
@@ -620,97 +611,6 @@ class _BalanceScreenState extends State<BalanceScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRecentTransactionsSection(ThemeData theme) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_transactions.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_outlined,
-              size: 48,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 8),
-            const Text('No balance transactions.'),
-          ],
-        ),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            'All Transactions',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _transactions.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final tx = _transactions[index];
-            final hasExpense = tx['expense_shares']?['expenses'] != null;
-            final hasGroup = tx['expense_shares']?['groups'] != null;
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  tx['transaction_type'] == 'add'
-                      ? Icons.add
-                      : tx['transaction_type'] == 'spend'
-                      ? Icons.remove
-                      : tx['transaction_type'] == 'loan'
-                      ? Icons.trending_down
-                      : Icons.autorenew,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              title: Text(
-                '${AppConstants.getTransactionTypeLabel(tx['transaction_type'])}: Rs ${(tx['amount'] as num?)?.toStringAsFixed(2) ?? '-'}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasExpense)
-                    Text(
-                      'Expense: ${tx['expense_shares']['expenses']['title']}',
-                    ),
-                  if (hasGroup)
-                    Text('Group: ${tx['expense_shares']['groups']['name']}'),
-                  Text(
-                    'Date: ${DateFormatter.formatFullDateTime(tx['created_at'])}',
-                  ),
-                ],
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            BalanceTransactionDetailScreen(transaction: tx),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
     );
   }
 }
