@@ -93,7 +93,7 @@ class _BalanceScreenState extends State<BalanceScreen>
     }
 
     try {
-      await _balanceService.addBalance(
+      final result = await _balanceService.addBalance(
         amount: amount,
         title: title,
         description: description.isNotEmpty ? description : null,
@@ -106,11 +106,25 @@ class _BalanceScreenState extends State<BalanceScreen>
       await _loadData();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added Rs ${amount.toStringAsFixed(2)} to balance'),
-          ),
-        );
+        String message;
+        if (result['had_outstanding_loan']) {
+          final amountRepaid = result['amount_repaid'] as double;
+          final amountToBalance = result['amount_to_balance'] as double;
+
+          if (amountToBalance > 0) {
+            message =
+                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan and added Rs ${amountToBalance.toStringAsFixed(2)} to balance';
+          } else {
+            message =
+                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan';
+          }
+        } else {
+          message = 'Added Rs ${amount.toStringAsFixed(2)} to balance';
+        }
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (mounted) {
@@ -162,9 +176,15 @@ class _BalanceScreenState extends State<BalanceScreen>
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Error repaying loan: $e';
+        if (e.toString().contains(
+          'Cannot repay more than the outstanding loan amount',
+        )) {
+          errorMessage = e.toString().replaceAll('Exception: ', '');
+        }
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error repaying loan: $e')));
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     }
   }
@@ -226,10 +246,18 @@ class _BalanceScreenState extends State<BalanceScreen>
     );
   }
 
-  void _showRepayLoanDialog() {
+  void _showRepayLoanDialog() async {
     _amountController.clear();
     _titleController.clear();
     _descriptionController.clear();
+
+    // Get current outstanding loan amount
+    double outstandingLoan = 0.0;
+    try {
+      outstandingLoan = await _balanceService.getOutstandingLoan();
+    } catch (e) {
+      // Handle error silently
+    }
 
     showDialog(
       context: context,
@@ -239,12 +267,51 @@ class _BalanceScreenState extends State<BalanceScreen>
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (outstandingLoan > 0)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Theme.of(context).colorScheme.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Outstanding loan: Rs ${outstandingLoan.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TextField(
                   controller: _amountController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Amount (Rs)',
                     prefixText: 'Rs ',
+                    hintText:
+                        outstandingLoan > 0
+                            ? 'Max: ${outstandingLoan.toStringAsFixed(2)}'
+                            : null,
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -37,20 +37,72 @@ class BalanceService {
     }
   }
 
-  // Add balance to user account
-  Future<void> addBalance({
+  // Add balance to user account (automatically repays loans first)
+  Future<Map<String, dynamic>> addBalance({
     required double amount,
     required String title,
     String? description,
   }) async {
     try {
-      await _supabase.from('balance_transactions').insert({
-        'user_id': _supabase.auth.currentUser!.id,
-        'transaction_type': 'add',
-        'amount': amount,
-        'title': title,
-        'description': description,
-      });
+      // Get current balance to check for outstanding loans
+      final currentBalance = await getUserBalance();
+      final totalLoans =
+          (currentBalance?['total_loans'] as num?)?.toDouble() ?? 0.0;
+      final totalRepaid =
+          (currentBalance?['total_repaid'] as num?)?.toDouble() ?? 0.0;
+      final outstandingLoan = totalLoans - totalRepaid;
+
+      if (outstandingLoan > 0) {
+        // There's an outstanding loan, repay it first
+        final amountToRepay =
+            outstandingLoan > amount ? amount : outstandingLoan;
+        final remainingAmount = amount - amountToRepay;
+
+        // Repay loan
+        await _supabase.from('balance_transactions').insert({
+          'user_id': _supabase.auth.currentUser!.id,
+          'transaction_type': 'repay',
+          'amount': amountToRepay,
+          'title': 'Auto-repay: $title',
+          'description': description ?? 'Automatic loan repayment',
+        });
+
+        // Add remaining amount to balance (if any)
+        if (remainingAmount > 0) {
+          await _supabase.from('balance_transactions').insert({
+            'user_id': _supabase.auth.currentUser!.id,
+            'transaction_type': 'add',
+            'amount': remainingAmount,
+            'title': title,
+            'description': description,
+          });
+        }
+
+        return {
+          'success': true,
+          'amount_added': amount,
+          'amount_repaid': amountToRepay,
+          'amount_to_balance': remainingAmount,
+          'had_outstanding_loan': true,
+        };
+      } else {
+        // No outstanding loan, add directly to balance
+        await _supabase.from('balance_transactions').insert({
+          'user_id': _supabase.auth.currentUser!.id,
+          'transaction_type': 'add',
+          'amount': amount,
+          'title': title,
+          'description': description,
+        });
+
+        return {
+          'success': true,
+          'amount_added': amount,
+          'amount_repaid': 0.0,
+          'amount_to_balance': amount,
+          'had_outstanding_loan': false,
+        };
+      }
     } catch (e) {
       rethrow;
     }
@@ -137,6 +189,21 @@ class BalanceService {
     String? description,
   }) async {
     try {
+      // Get current balance to check outstanding loan
+      final currentBalance = await getUserBalance();
+      final totalLoans =
+          (currentBalance?['total_loans'] as num?)?.toDouble() ?? 0.0;
+      final totalRepaid =
+          (currentBalance?['total_repaid'] as num?)?.toDouble() ?? 0.0;
+      final outstandingLoan = totalLoans - totalRepaid;
+
+      // Validate that we're not repaying more than outstanding
+      if (amount > outstandingLoan) {
+        throw Exception(
+          'Cannot repay more than the outstanding loan amount (Rs ${outstandingLoan.toStringAsFixed(2)})',
+        );
+      }
+
       await _supabase.from('balance_transactions').insert({
         'user_id': _supabase.auth.currentUser!.id,
         'transaction_type': 'repay',

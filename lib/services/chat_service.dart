@@ -1302,18 +1302,9 @@ class ChatService {
 
       // Create appropriate message content based on payment method
       String messageContent;
-      if (paymentResult['payment_method'] == 'balance') {
-        messageContent =
-            '✅ ${currentUserProfile['display_name']} paid Rs ${amountOwed.toStringAsFixed(2)} for $expenseTitle (from balance)';
-      } else if (paymentResult['payment_method'] == 'mixed') {
-        final fromBalance = paymentResult['amount_paid_from_balance'];
-        final fromLoan = paymentResult['amount_paid_from_loan'];
-        messageContent =
-            '✅ ${currentUserProfile['display_name']} paid Rs ${amountOwed.toStringAsFixed(2)} for $expenseTitle (Rs ${fromBalance.toStringAsFixed(2)} from balance, Rs ${fromLoan.toStringAsFixed(2)} from loan)';
-      } else {
-        messageContent =
-            '✅ ${currentUserProfile['display_name']} paid Rs ${amountOwed.toStringAsFixed(2)} for $expenseTitle (from loan)';
-      }
+      // Simplified message - don't show loan information
+      messageContent =
+          '✅ ${currentUserProfile['display_name']} paid Rs ${amountOwed.toStringAsFixed(2)} for $expenseTitle';
 
       // Send a payment message to the group
       await sendGroupMessage(

@@ -47,7 +47,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
     super.initState();
     _currentGroupName = widget.groupName;
     _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(_onTabChanged);
     _loadGroupSummary();
     _loadInitialMessages();
     _loadLastReadTimestamp();
@@ -1073,39 +1072,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                     ),
                                   ],
                                 ),
-                                // Show balance information if available
-                                if (message['payment_data']['payment_method'] !=
-                                    null) ...[
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        message['payment_data']['payment_method'] ==
-                                                'balance'
-                                            ? Icons.account_balance_wallet
-                                            : message['payment_data']['payment_method'] ==
-                                                'mixed'
-                                            ? Icons.account_balance
-                                            : Icons.credit_card,
-                                        size: 16,
-                                        color: theme.colorScheme.secondary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          _getPaymentMethodText(
-                                            message['payment_data'],
-                                          ),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: theme.colorScheme.secondary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
                               ],
                             ),
                           ),
@@ -1569,31 +1535,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
       await _chatService.markGroupMessagesAsRead(widget.groupId);
     } catch (e) {
       // Handle error silently
-    }
-  }
-
-  void _onTabChanged() {
-    // Implementation of _onTabChanged method
-  }
-
-  String _getPaymentMethodText(Map<String, dynamic> paymentData) {
-    final paymentMethod = paymentData['payment_method'] as String?;
-    final amountPaidFromBalance =
-        (paymentData['amount_paid_from_balance'] as num?)?.toDouble() ?? 0.0;
-    final amountPaidFromLoan =
-        (paymentData['amount_paid_from_loan'] as num?)?.toDouble() ?? 0.0;
-    final remainingBalance =
-        (paymentData['remaining_balance'] as num?)?.toDouble() ?? 0.0;
-
-    switch (paymentMethod) {
-      case 'balance':
-        return 'Paid from balance (Remaining: Rs ${remainingBalance.toStringAsFixed(2)})';
-      case 'mixed':
-        return 'Rs ${amountPaidFromBalance.toStringAsFixed(2)} from balance, Rs ${amountPaidFromLoan.toStringAsFixed(2)} from loan';
-      case 'loan':
-        return 'Paid from loan (Outstanding: Rs ${amountPaidFromLoan.toStringAsFixed(2)})';
-      default:
-        return 'Payment completed';
     }
   }
 }
