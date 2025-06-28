@@ -19,7 +19,6 @@ class _BalanceScreenState extends State<BalanceScreen>
   Map<String, dynamic>? _userBalance;
   Map<String, dynamic>? _balanceStats;
   List<Map<String, dynamic>> _defaultBalanceTitles = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -36,10 +35,6 @@ class _BalanceScreenState extends State<BalanceScreen>
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
       final results = await Future.wait([
         _balanceService.getUserBalance(),
@@ -53,12 +48,8 @@ class _BalanceScreenState extends State<BalanceScreen>
         _defaultBalanceTitles = List<Map<String, dynamic>>.from(
           results[2] as List<dynamic>,
         );
-        _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading balance data: $e')),
@@ -161,6 +152,52 @@ class _BalanceScreenState extends State<BalanceScreen>
     }
   }
 
+  Widget _formatCurrencyWithSuperscript(double amount) {
+    final parts = amount.toStringAsFixed(2).split('.');
+    final rupees = parts[0];
+    final paise = parts[1];
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+          fontSize: 28,
+        ),
+        children: [
+          TextSpan(text: 'Rs $rupees'),
+          TextSpan(
+            text: '.$paise',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _formatCurrencyWithSuperscriptSmall(double amount, {Color? color}) {
+    final parts = amount.toStringAsFixed(2).split('.');
+    final rupees = parts[0];
+    final paise = parts[1];
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: color ?? Theme.of(context).colorScheme.error,
+          fontSize: 20,
+        ),
+        children: [
+          TextSpan(text: 'Rs $rupees'),
+          TextSpan(
+            text: '.$paise',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBalanceCard(ThemeData theme) {
     final currentBalance =
         (_userBalance?['current_balance'] as num?)?.toDouble() ?? 0.0;
@@ -190,13 +227,7 @@ class _BalanceScreenState extends State<BalanceScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Rs ${displayBalance.toStringAsFixed(2)}',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
+                        _formatCurrencyWithSuperscript(displayBalance),
                       ],
                     ),
                     if (outstandingLoan > 0)
@@ -294,13 +325,7 @@ class _BalanceScreenState extends State<BalanceScreen>
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          Text(
-                            'Rs ${outstandingLoan.toStringAsFixed(2)}',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
+                          _formatCurrencyWithSuperscriptSmall(outstandingLoan),
                         ],
                       ),
                       const SizedBox(height: 16),
