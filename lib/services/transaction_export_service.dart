@@ -108,10 +108,10 @@ class TransactionExportService {
       'Date/Time,${DateFormatter.formatFullDateTime(tx['created_at'])}',
     );
     buffer.writeln(
-      'Balance Before,Rs ${(tx['balance_before'] as num?)?.toStringAsFixed(2) ?? '-'}',
+      'Balance Before,Rs ${((tx['balance_before'] as num?)?.toDouble() ?? 0.0) < 0 ? 0.0 : (tx['balance_before'] as num?)?.toStringAsFixed(2) ?? '-'}',
     );
     buffer.writeln(
-      'Balance After,Rs ${(tx['balance_after'] as num?)?.toStringAsFixed(2) ?? '-'}',
+      'Balance After,Rs ${((tx['balance_after'] as num?)?.toDouble() ?? 0.0) < 0 ? 0.0 : (tx['balance_after'] as num?)?.toStringAsFixed(2) ?? '-'}',
     );
 
     // Related expense information if available
@@ -197,8 +197,8 @@ class TransactionExportService {
           _escapeCsvField(tx['title'] ?? '-'),
           _escapeCsvField(tx['description'] ?? '-'),
           DateFormatter.formatFullDateTime(tx['created_at']),
-          'Rs ${(tx['balance_before'] as num?)?.toStringAsFixed(2) ?? '-'}',
-          'Rs ${(tx['balance_after'] as num?)?.toStringAsFixed(2) ?? '-'}',
+          'Rs ${((tx['balance_before'] as num?)?.toDouble() ?? 0.0) < 0 ? 0.0 : (tx['balance_before'] as num?)?.toStringAsFixed(2) ?? '-'}',
+          'Rs ${((tx['balance_after'] as num?)?.toDouble() ?? 0.0) < 0 ? 0.0 : (tx['balance_after'] as num?)?.toStringAsFixed(2) ?? '-'}',
         ].join(','),
       );
     }

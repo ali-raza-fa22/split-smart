@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
 
 class AllExpenseSharesScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class AllExpenseSharesScreen extends StatefulWidget {
 
 class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
   final ChatService _chatService = ChatService();
+  final BalanceService _balanceService = BalanceService();
   List<Map<String, dynamic>> _expenseShares = [];
   bool _isLoading = true;
 
@@ -47,6 +49,63 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
 
   Future<void> _markAsPaid(String expenseShareId) async {
     try {
+      // Get the expense share details first
+      final expenseShare = _expenseShares.firstWhere(
+        (share) => share['id'] == expenseShareId,
+      );
+      final amountOwed = (expenseShare['amount_owed'] as num).toDouble();
+
+      // Check current balance
+      final currentBalance = await _balanceService.getCurrentBalance();
+      final hasSufficientBalance = await _balanceService.hasSufficientBalance(
+        amountOwed,
+      );
+
+      // Show confirmation dialog if insufficient balance
+      if (!hasSufficientBalance && mounted) {
+        final shouldProceed = await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Insufficient Balance'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('You need to pay Rs ${amountOwed.toStringAsFixed(2)}'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your current balance: Rs ${(currentBalance < 0 ? 0.0 : currentBalance).toStringAsFixed(2)}',
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'This will create a loan for the remaining amount. Do you want to proceed?',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
+                    ),
+                    child: const Text('Proceed with Loan'),
+                  ),
+                ],
+              ),
+        );
+
+        if (shouldProceed != true) {
+          return; // User cancelled
+        }
+      }
+
       final paymentResult = await _chatService.markExpenseShareAsPaid(
         expenseShareId,
       );
