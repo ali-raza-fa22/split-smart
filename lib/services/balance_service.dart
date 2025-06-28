@@ -255,7 +255,7 @@ class BalanceService {
           .from('default_balance_titles')
           .select('*')
           .eq('is_active', true)
-          .eq('category', category ?? '')
+          .eq('category', category ?? 'income')
           .order('title');
 
       return List<Map<String, dynamic>>.from(titles);

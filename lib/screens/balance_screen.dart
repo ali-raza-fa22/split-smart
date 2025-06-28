@@ -3,6 +3,7 @@ import 'package:split_smart_supabase/utils/constants.dart';
 import '../services/balance_service.dart';
 import '../utils/date_formatter.dart';
 import 'balance_transaction_detail_screen.dart';
+import '../widgets/add_balance_dialog.dart';
 
 class BalanceScreen extends StatefulWidget {
   const BalanceScreen({super.key});
@@ -23,6 +24,8 @@ class _BalanceScreenState extends State<BalanceScreen>
   Map<String, dynamic>? _balanceStats;
   bool _isLoading = true;
   bool _isLoanSectionExpanded = false;
+  List<Map<String, dynamic>> _defaultBalanceTitles = [];
+  String? _selectedBalanceTitle;
   late TabController _tabController;
 
   @override
@@ -51,6 +54,7 @@ class _BalanceScreenState extends State<BalanceScreen>
         _balanceService.getUserBalance(),
         _balanceService.getTransactionHistory(limit: 50),
         _balanceService.getBalanceStatistics(),
+        _balanceService.getDefaultBalanceTitles(),
       ]);
 
       setState(() {
@@ -59,6 +63,9 @@ class _BalanceScreenState extends State<BalanceScreen>
           results[1] as List<dynamic>,
         );
         _balanceStats = results[2] as Map<String, dynamic>?;
+        _defaultBalanceTitles = List<Map<String, dynamic>>.from(
+          results[3] as List<dynamic>,
+        );
         _isLoading = false;
       });
     } catch (e) {
@@ -69,68 +76,6 @@ class _BalanceScreenState extends State<BalanceScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading balance data: $e')),
         );
-      }
-    }
-  }
-
-  Future<void> _addBalance() async {
-    final amount = double.tryParse(_amountController.text);
-    final title = _titleController.text.trim();
-    final description = _descriptionController.text.trim();
-
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid amount')),
-      );
-      return;
-    }
-
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
-      return;
-    }
-
-    try {
-      final result = await _balanceService.addBalance(
-        amount: amount,
-        title: title,
-        description: description.isNotEmpty ? description : null,
-      );
-
-      _amountController.clear();
-      _titleController.clear();
-      _descriptionController.clear();
-
-      await _loadData();
-
-      if (mounted) {
-        String message;
-        if (result['had_outstanding_loan']) {
-          final amountRepaid = result['amount_repaid'] as double;
-          final amountToBalance = result['amount_to_balance'] as double;
-
-          if (amountToBalance > 0) {
-            message =
-                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan and added Rs ${amountToBalance.toStringAsFixed(2)} to balance';
-          } else {
-            message =
-                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan';
-          }
-        } else {
-          message = 'Added Rs ${amount.toStringAsFixed(2)} to balance';
-        }
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error adding balance: $e')));
       }
     }
   }
@@ -193,63 +138,72 @@ class _BalanceScreenState extends State<BalanceScreen>
     _amountController.clear();
     _titleController.clear();
     _descriptionController.clear();
+    _selectedBalanceTitle = null;
 
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Add Balance'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Amount (Rs)',
-                    prefixText: 'Rs ',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g., Salary, Freelance',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Additional details',
-                  ),
-                  maxLines: 2,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _addBalance();
-                },
-                child: const Text('Add'),
-              ),
-            ],
+          (context) => AddBalanceDialog(
+            defaultBalanceTitles: _defaultBalanceTitles,
+            onAdd: (amount, title, description) {
+              Navigator.of(context).pop();
+              _addBalanceWithData(amount, title, description);
+            },
           ),
     );
+  }
+
+  // Helper method to add balance with provided data
+  Future<void> _addBalanceWithData(
+    double amount,
+    String title,
+    String? description,
+  ) async {
+    try {
+      final result = await _balanceService.addBalance(
+        amount: amount,
+        title: title,
+        description: description,
+      );
+
+      await _loadData();
+
+      if (mounted) {
+        String message;
+        if (result['had_outstanding_loan']) {
+          final amountRepaid = result['amount_repaid'] as double;
+          final amountToBalance = result['amount_to_balance'] as double;
+
+          if (amountToBalance > 0) {
+            message =
+                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan and added Rs ${amountToBalance.toStringAsFixed(2)} to balance';
+          } else {
+            message =
+                'Auto-repaid Rs ${amountRepaid.toStringAsFixed(2)} of loan';
+          }
+        } else {
+          message = 'Added Rs ${amount.toStringAsFixed(2)} to balance';
+        }
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error adding balance: $e')));
+      }
+    }
   }
 
   void _showRepayLoanDialog() async {
     _amountController.clear();
     _titleController.clear();
     _descriptionController.clear();
+    _selectedBalanceTitle = null;
 
     // Get current outstanding loan amount
     double outstandingLoan = 0.0;
@@ -261,92 +215,193 @@ class _BalanceScreenState extends State<BalanceScreen>
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Repay Loan'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (outstandingLoan > 0)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.errorContainer.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.error.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Theme.of(context).colorScheme.error,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Outstanding loan: Rs ${outstandingLoan.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontWeight: FontWeight.w600,
+      builder: (context) {
+        // Create controllers ONCE per dialog open
+        final localAmountController = TextEditingController(
+          text: _amountController.text,
+        );
+        final localTitleController = TextEditingController(
+          text: _titleController.text,
+        );
+        final localDescriptionController = TextEditingController(
+          text: _descriptionController.text,
+        );
+        String? localSelectedTitle = _selectedBalanceTitle;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: const Text('Repay Loan'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (outstandingLoan > 0)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.errorContainer.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.error.withValues(alpha: 0.2),
                             ),
                           ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Theme.of(context).colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Outstanding loan: Rs ${outstandingLoan.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Amount (Rs)',
-                    prefixText: 'Rs ',
-                    hintText:
-                        outstandingLoan > 0
-                            ? 'Max: ${outstandingLoan.toStringAsFixed(2)}'
-                            : null,
+                      TextField(
+                        controller: localAmountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Amount (Rs)',
+                          prefixText: 'Rs ',
+                          hintText:
+                              outstandingLoan > 0
+                                  ? 'Max: ${outstandingLoan.toStringAsFixed(2)}'
+                                  : null,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        value: localSelectedTitle,
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          border: OutlineInputBorder(),
+                        ),
+                        hint: const Text('Select a title or type custom'),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: 'Loan Repayment',
+                            child: Row(
+                              children: [
+                                Icon(Icons.payment, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(child: Text('Loan Repayment')),
+                              ],
+                            ),
+                          ),
+                          const DropdownMenuItem<String>(
+                            value: 'Partial Loan Repayment',
+                            child: Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(child: Text('Partial Loan Repayment')),
+                              ],
+                            ),
+                          ),
+                          const DropdownMenuItem<String>(
+                            value: 'Full Loan Repayment',
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(child: Text('Full Loan Repayment')),
+                              ],
+                            ),
+                          ),
+                          const DropdownMenuItem<String>(
+                            value: 'custom',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(child: Text('Custom title...')),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            localSelectedTitle = value;
+                            if (value != null && value != 'custom') {
+                              localTitleController.text = value;
+                              if (value == 'Full Loan Repayment' &&
+                                  outstandingLoan > 0) {
+                                localAmountController.text = outstandingLoan
+                                    .toStringAsFixed(2);
+                              }
+                            } else {
+                              localTitleController.clear();
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      if (localSelectedTitle == 'custom')
+                        TextField(
+                          controller: localTitleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Custom Title',
+                            hintText: 'e.g., Loan Repayment',
+                          ),
+                        ),
+                      TextField(
+                        controller: localDescriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Description (optional)',
+                          hintText: 'Additional details',
+                        ),
+                        maxLines: 1,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g., Loan Repayment',
-                  ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Additional details',
-                  ),
-                  maxLines: 2,
+                ElevatedButton(
+                  onPressed: () {
+                    // Copy local values to main controllers before submit
+                    _amountController.text = localAmountController.text;
+                    _titleController.text =
+                        localSelectedTitle == 'custom'
+                            ? localTitleController.text
+                            : (localSelectedTitle ?? '');
+                    _descriptionController.text =
+                        localDescriptionController.text;
+                    _selectedBalanceTitle = localSelectedTitle;
+                    Navigator.of(context).pop();
+                    _repayLoan();
+                  },
+                  child: const Text('Repay'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _repayLoan();
-                },
-                child: const Text('Repay'),
-              ),
-            ],
-          ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -466,10 +521,12 @@ class _BalanceScreenState extends State<BalanceScreen>
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(top: 8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withOpacity(0.1),
+                      color: theme.colorScheme.errorContainer.withValues(
+                        alpha: 0.1,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.error.withOpacity(0.2),
+                        color: theme.colorScheme.error.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
