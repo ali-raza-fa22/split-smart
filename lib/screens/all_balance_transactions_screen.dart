@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:split_smart_supabase/widgets/brand_button_2.dart';
 import 'package:split_smart_supabase/widgets/categoryfilter_dialog.dart';
 import 'package:split_smart_supabase/widgets/datefilter_dialog.dart';
 import '../services/balance_service.dart';
@@ -141,6 +142,15 @@ class _AllBalanceTransactionsScreenState
   }
 
   void _showDateFilterDialog() async {
+    if (_selectedDateFilter != 'all') {
+      setState(() {
+        _selectedDateFilter = 'all';
+        _customStartDate = null;
+        _customEndDate = null;
+      });
+      _applyFilters();
+      return;
+    }
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -168,6 +178,13 @@ class _AllBalanceTransactionsScreenState
   }
 
   void _showCategoryFilterDialog() async {
+    if (_selectedCategoryFilter != 'all') {
+      setState(() {
+        _selectedCategoryFilter = 'all';
+      });
+      _applyFilters();
+      return;
+    }
     String? selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -184,8 +201,14 @@ class _AllBalanceTransactionsScreenState
     }
   }
 
-  void _showDirectionDialog(String direction) async {
-    // Optionally show info dialog or just toggle
+  void _showDirectionDialog(String direction) {
+    if (_selectedDirection == direction) {
+      setState(() {
+        _selectedDirection = 'all';
+      });
+      _applyFilters();
+      return;
+    }
     setState(() {
       _selectedDirection = direction;
       _selectedCategoryFilter = 'all';
@@ -315,7 +338,7 @@ class _AllBalanceTransactionsScreenState
           if (filterSummary.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               color: theme.colorScheme.primaryContainer,
               child: Row(
                 children: [
@@ -333,6 +356,12 @@ class _AllBalanceTransactionsScreenState
                       ),
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 14),
+                    color: theme.colorScheme.onPrimaryContainer,
+                    tooltip: 'Clear all filters',
+                    onPressed: _clearFilters,
+                  ),
                 ],
               ),
             ),
@@ -341,7 +370,7 @@ class _AllBalanceTransactionsScreenState
           if (_filteredTransactions.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               color: theme.colorScheme.surfaceVariant,
               child: Text(
                 '${_filteredTransactions.length} transaction${_filteredTransactions.length == 1 ? '' : 's'}',
@@ -398,124 +427,38 @@ class _AllBalanceTransactionsScreenState
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
                                     children: [
-                                      OutlinedButton.icon(
+                                      BrandButton2(
+                                        label: 'Date',
+                                        icon: Icons.arrow_drop_down,
+                                        isActive: _selectedDateFilter != 'all',
                                         onPressed: _showDateFilterDialog,
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        label: const Text('Date'),
-                                        style: OutlinedButton.styleFrom(
-                                          shape: const StadiumBorder(),
-                                          side: BorderSide(
-                                            color: Colors.grey.shade400,
-                                          ),
-                                          foregroundColor: Colors.grey,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 10,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      OutlinedButton.icon(
+                                      const SizedBox(width: 6),
+                                      BrandButton2(
+                                        label: 'Categories',
+                                        icon: Icons.arrow_drop_down,
+                                        isActive:
+                                            _selectedCategoryFilter != 'all',
                                         onPressed: _showCategoryFilterDialog,
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        label: const Text('Categories'),
-                                        style: OutlinedButton.styleFrom(
-                                          shape: const StadiumBorder(),
-                                          side: BorderSide(
-                                            color: Colors.grey.shade400,
-                                          ),
-                                          foregroundColor: Colors.grey,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 10,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      OutlinedButton.icon(
+                                      const SizedBox(width: 6),
+                                      BrandButton2(
+                                        label: 'Received',
+                                        icon: Icons.south_west,
+                                        isActive:
+                                            _selectedDirection == 'received',
                                         onPressed:
                                             () => _showDirectionDialog(
                                               'received',
                                             ),
-                                        icon: const Icon(Icons.south_west),
-                                        label: const Text('Received'),
-                                        style: OutlinedButton.styleFrom(
-                                          shape: const StadiumBorder(),
-                                          side: BorderSide(
-                                            color:
-                                                _selectedDirection == 'received'
-                                                    ? Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary
-                                                    : Colors.grey.shade400,
-                                            width: 2,
-                                          ),
-                                          foregroundColor:
-                                              _selectedDirection == 'received'
-                                                  ? Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary
-                                                  : Colors.grey,
-                                          backgroundColor:
-                                              _selectedDirection == 'received'
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .primary
-                                                      .withValues(alpha: 0.08)
-                                                  : null,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 10,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      OutlinedButton.icon(
+                                      const SizedBox(width: 6),
+                                      BrandButton2(
+                                        label: 'Sent',
+                                        icon: Icons.north_east,
+                                        isActive: _selectedDirection == 'sent',
                                         onPressed:
                                             () => _showDirectionDialog('sent'),
-                                        icon: const Icon(Icons.north_east),
-                                        label: const Text('Sent'),
-                                        style: OutlinedButton.styleFrom(
-                                          shape: const StadiumBorder(),
-                                          side: BorderSide(
-                                            color:
-                                                _selectedDirection == 'sent'
-                                                    ? Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary
-                                                    : Colors.grey.shade400,
-                                            width: 2,
-                                          ),
-                                          foregroundColor:
-                                              _selectedDirection == 'sent'
-                                                  ? Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary
-                                                  : Colors.grey,
-                                          backgroundColor:
-                                              _selectedDirection == 'sent'
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .primary
-                                                      .withValues(alpha: 0.08)
-                                                  : null,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 10,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
                                       ),
                                     ],
                                   ),
@@ -615,7 +558,7 @@ class _AllBalanceTransactionsScreenState
                                                       ),
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 16,
+                                                      fontSize: 18,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
