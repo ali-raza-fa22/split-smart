@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen>
     with SingleTickerProviderStateMixin {
   final ChatService _chatService = ChatService();
+  final BalanceService _balanceService = BalanceService();
   late TabController _tabController;
 
   List<Map<String, dynamic>> _expenses = [];
@@ -70,7 +72,66 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
   Future<void> _markAsPaid(String expenseShareId) async {
     try {
-      await _chatService.markExpenseShareAsPaid(expenseShareId);
+      // Get the expense share details first
+      final expenseShare = _userExpenseShares.firstWhere(
+        (share) => share['id'] == expenseShareId,
+      );
+      final amountOwed = (expenseShare['amount_owed'] as num).toDouble();
+
+      // Check current balance
+      final currentBalance = await _balanceService.getCurrentBalance();
+      final hasSufficientBalance = await _balanceService.hasSufficientBalance(
+        amountOwed,
+      );
+
+      // Show confirmation dialog if insufficient balance
+      if (!hasSufficientBalance && mounted) {
+        final shouldProceed = await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Insufficient Balance'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('You need to pay Rs ${amountOwed.toStringAsFixed(2)}'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your current balance: Rs ${(currentBalance < 0 ? 0.0 : currentBalance).toStringAsFixed(2)}',
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'This will create a loan for the remaining amount. Do you want to proceed?',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
+                    ),
+                    child: const Text('Proceed with Loan'),
+                  ),
+                ],
+              ),
+        );
+
+        if (shouldProceed != true) {
+          return; // User cancelled
+        }
+      }
+
+      final paymentResult = await _chatService.markExpenseShareAsPaid(
+        expenseShareId,
+      );
 
       // Update only the specific expense share in the list
       setState(() {
@@ -92,9 +153,26 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       _refreshSummaryData();
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Marked as paid!')));
+        String message;
+        if (paymentResult['payment_method'] == 'balance') {
+          message =
+              'Paid from balance! Remaining balance: Rs ${paymentResult['remaining_balance'].toStringAsFixed(2)}';
+        } else if (paymentResult['payment_method'] == 'mixed') {
+          final fromBalance = paymentResult['amount_paid_from_balance'];
+          final fromLoan = paymentResult['amount_paid_from_loan'];
+          message =
+              'Paid Rs ${fromBalance.toStringAsFixed(2)} from balance and Rs ${fromLoan.toStringAsFixed(2)} from loan';
+        } else {
+          message =
+              'Paid from loan! Outstanding loan: Rs ${paymentResult['amount_paid_from_loan'].toStringAsFixed(2)}';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -328,7 +406,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                         Text(
                           isZero
                               ? 'Settled up'
-                              : '${isPositive ? '+' : ''}Rs ${balance.toStringAsFixed(2)}',
+                              : '${isPositive ? '+' : ''}Rs ${(balance < 0 ? 0.0 : balance).toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

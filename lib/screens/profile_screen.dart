@@ -4,6 +4,7 @@ import 'edit_profile_screen.dart';
 import 'chat_list_screen.dart';
 import 'stats_screen.dart';
 import 'all_expenses_screen.dart';
+import 'all_balance_transactions_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -239,6 +240,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const AllExpensesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.tertiary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.account_balance_wallet,
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
+                      ),
+                      title: const Text('Transactions history'),
+                      subtitle: const Text('View your transaction history'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    const AllBalanceTransactionsScreen(),
                           ),
                         );
                       },

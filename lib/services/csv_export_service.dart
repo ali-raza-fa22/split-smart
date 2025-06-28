@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:split_smart_supabase/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
+import '../utils/date_formatter.dart';
 
 class CsvExportService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -45,7 +45,9 @@ class CsvExportService {
 
       // Get file path with new naming convention
       final documentsPath = await _getDocumentsPath();
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final now = DateTime.now();
+      final timestamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
       final fileName =
           '${groupName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}-expenses-$timestamp.csv';
       final filePath = '$documentsPath/$fileName';
@@ -236,7 +238,7 @@ class CsvExportService {
     buffer.writeln('=' * 30);
     buffer.writeln();
     buffer.writeln(
-      'Report Generated: ${DateFormat('EEEE, MMMM d, yyyy \'at\' h:mm:ss a').format(DateTime.now())}',
+      'Report Generated: ${DateFormatter.formatFullDateTime(DateTime.now())}',
     );
     buffer.writeln();
   }
@@ -254,7 +256,7 @@ class CsvExportService {
       'Created By,${_escapeCsvField(group['creator_name'])} (${group['creator_email']})',
     );
     buffer.writeln(
-      'Created On,${DateFormat('EEEE, MMMM d, yyyy \'at\' h:mm:ss a').format(DateTime.parse(group['created_at']).toLocal())}',
+      'Created On,${DateFormatter.formatFullDateTime(DateTime.parse(group['created_at']).toLocal())}',
     );
     buffer.writeln();
   }
@@ -269,9 +271,9 @@ class CsvExportService {
     buffer.writeln('Name,Username,Email,Role,Joined Date');
 
     for (final member in members) {
-      final joinedDate = DateFormat(
-        'MMM d, yyyy',
-      ).format(DateTime.parse(member['created_at']).toLocal());
+      final joinedDate = DateFormatter.formatFullDateTime(
+        DateTime.parse(member['created_at']).toLocal(),
+      );
 
       buffer.writeln(
         [
@@ -298,9 +300,9 @@ class CsvExportService {
     );
 
     for (final expense in expenses) {
-      final createdDate = DateFormat(
-        'MMM d, yyyy \'at\' h:mm a',
-      ).format(DateTime.parse(expense['created_at']).toLocal());
+      final createdDate = DateFormatter.formatFullDateTime(
+        DateTime.parse(expense['created_at']).toLocal(),
+      );
 
       buffer.writeln(
         [
@@ -337,9 +339,9 @@ class CsvExportService {
       for (final share in expenseShares) {
         final paidDate =
             share['paid_at'] != null
-                ? DateFormat(
-                  'MMM d, yyyy \'at\' h:mm a',
-                ).format(DateTime.parse(share['paid_at']).toLocal())
+                ? DateFormatter.formatFullDateTime(
+                  DateTime.parse(share['paid_at']).toLocal(),
+                )
                 : '';
 
         buffer.writeln(

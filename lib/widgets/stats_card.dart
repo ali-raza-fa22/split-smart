@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class StatsCard extends StatelessWidget {
   final String title;
-  final IconData icon;
   final Color color;
   final List<Widget> children;
   final EdgeInsetsGeometry? padding;
@@ -10,7 +9,6 @@ class StatsCard extends StatelessWidget {
   const StatsCard({
     super.key,
     required this.title,
-    required this.icon,
     required this.color,
     required this.children,
     this.padding,
@@ -39,15 +37,6 @@ class StatsCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const SizedBox(width: 14),
                 Text(
                   title,
                   style: theme.textTheme.titleLarge?.copyWith(

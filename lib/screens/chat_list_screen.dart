@@ -8,6 +8,7 @@ import 'group_chat_detail_screen.dart';
 import 'profile_screen.dart';
 import 'stats_screen.dart';
 import 'all_expenses_screen.dart';
+import 'balance_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'verify_email_screen.dart';
@@ -274,6 +275,14 @@ class _ChatListScreenState extends State<ChatListScreen>
                     ),
                   );
                   break;
+                case 'balance':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BalanceScreen(),
+                    ),
+                  );
+                  break;
                 case 'logout':
                   _authService
                       .logout()
@@ -321,6 +330,16 @@ class _ChatListScreenState extends State<ChatListScreen>
                         Icon(Icons.receipt_long),
                         SizedBox(width: 8),
                         Text('All Expenses'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'balance',
+                    child: Row(
+                      children: [
+                        Icon(Icons.attach_money),
+                        SizedBox(width: 8),
+                        Text('Balance'),
                       ],
                     ),
                   ),
