@@ -904,6 +904,7 @@ class ChatService {
             ...group,
             'last_message': lastMessageWithSender,
             'member_names': memberNames,
+            'member_count': members.length,
           });
         } catch (e) {
           // If there's an error getting details, just add the basic group info

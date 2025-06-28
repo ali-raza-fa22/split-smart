@@ -224,13 +224,12 @@ class _StatsScreenState extends State<StatsScreen>
   }
 
   void _showGroupDetailsModal(String title, List<Map<String, dynamic>> groups) {
-    final activeGroups =
-        groups.where((group) => group['last_message_at'] != null).length;
+    final activeGroups = groups.where((group) => _isGroupActive(group)).length;
 
     final groupItems =
         groups.map((group) {
           final groupName = group['name'] ?? 'Unknown Group';
-          final isActive = group['last_message_at'] != null;
+          final isActive = _isGroupActive(group);
           final memberCount = group['member_count'] ?? 0;
 
           return Container(
@@ -335,7 +334,9 @@ class _StatsScreenState extends State<StatsScreen>
       subtitle:
           '${groups.length} group${groups.length != 1 ? 's' : ''} • $activeGroups active',
       totalAmount:
-          '${(activeGroups / groups.length * 100).toStringAsFixed(0)}%',
+          groups.length > 0
+              ? '${(activeGroups / groups.length * 100).toStringAsFixed(0)}%'
+              : '0%',
       icon: Icons.group,
       children: groupItems,
       isEmpty: groups.isEmpty,
@@ -739,11 +740,10 @@ class _StatsScreenState extends State<StatsScreen>
 
   Widget _buildGroupStats(ThemeData theme) {
     final totalGroups = _groups.length;
-    final activeGroups =
-        _groups.where((group) => group['last_message_at'] != null).length;
+    final activeGroups = _groups.where((group) => _isGroupActive(group)).length;
 
     final activeGroupList =
-        _groups.where((group) => group['last_message_at'] != null).toList();
+        _groups.where((group) => _isGroupActive(group)).toList();
 
     return StatsCard(
       title: 'Group Statistics',
@@ -765,5 +765,18 @@ class _StatsScreenState extends State<StatsScreen>
         ),
       ],
     );
+  }
+
+  bool _isGroupActive(Map<String, dynamic> group) {
+    final lastMessage = group['last_message'];
+    if (lastMessage == null) return false;
+
+    try {
+      final messageTime = DateTime.parse(lastMessage['created_at']);
+      final oneWeekAgo = DateTime.now().subtract(const Duration(days: 7));
+      return messageTime.isAfter(oneWeekAgo);
+    } catch (e) {
+      return false;
+    }
   }
 }
