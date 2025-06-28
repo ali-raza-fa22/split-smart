@@ -192,4 +192,39 @@ Offset: ${localTime.timeZoneOffset}
       return 'Error: $e';
     }
   }
+
+  // Format full date and time (e.g., "Jan 15, 2024 2:30 PM")
+  static String formatFullDateTime(dynamic dt) {
+    if (dt == null) return '-';
+    try {
+      final date =
+          dt is DateTime
+              ? dt.toLocal()
+              : DateTime.parse(dt.toString()).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final month = months[date.month - 1];
+      final day = date.day;
+      final year = date.year;
+      int hour = date.hour;
+      final minute = date.minute.toString().padLeft(2, '0');
+      final period = hour >= 12 ? 'PM' : 'AM';
+      hour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+      return '$month $day, $year $hour:$minute $period';
+    } catch (_) {
+      return dt.toString();
+    }
+  }
 }
