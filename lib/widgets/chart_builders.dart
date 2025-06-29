@@ -196,9 +196,11 @@ class ChartBuilders {
     final inactiveGroups =
         groups.where((group) {
           final lastMessage = group['last_message'];
-          if (lastMessage == null)
+          if (lastMessage == null) {
             return true; // Groups with no messages are inactive
-          return !AppUtils.isItemActive(lastMessage, 'created_at');
+          } else {
+            return !AppUtils.isItemActive(lastMessage, 'created_at');
+          }
         }).length;
 
     final chartData = <ChartDataItem>[

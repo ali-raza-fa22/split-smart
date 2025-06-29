@@ -260,8 +260,8 @@ class _AllBalanceTransactionsScreenState
 
   List<Map<String, dynamic>> _getTabFilteredTransactions(int tabIndex) {
     if (tabIndex == 1) {
-      // Spendings: spend, loan, repay
-      return _filteredTransactions
+      // Spendings: spend, loan, repay - show all without filters
+      return _transactions
           .where(
             (tx) =>
                 tx['transaction_type'] == 'spend' ||
@@ -270,7 +270,7 @@ class _AllBalanceTransactionsScreenState
           )
           .toList();
     }
-    // All Payments: all
+    // All Payments: use filtered transactions
     return _filteredTransactions;
   }
 
