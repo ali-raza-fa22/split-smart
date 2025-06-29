@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'app_constants.dart';
 
 class AppUtils {
+  static bool isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   // Calculate average amount from a list of items with amount field
   static double calculateAverageAmount(
     List<Map<String, dynamic>> items,

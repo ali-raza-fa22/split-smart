@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_utils.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -30,10 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-
   void _clearEmailError() {
     if (_emailError != null) {
       setState(() {
@@ -57,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Validate email format
     final email = _emailController.text.trim();
-    if (!_isValidEmail(email)) {
+    if (!AppUtils.isValidEmail(email)) {
       setState(() {
         _emailError = 'Please enter a valid email address';
       });
@@ -138,8 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 32),
-                    Padding(
-                      padding: EdgeInsets.only(left: 12),
+                    Center(
                       child: SvgPicture.asset(
                         'assets/icons/SPLITSMART.svg',
                         height: 32,
@@ -175,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!_isValidEmail(value.trim())) {
+                        if (!AppUtils.isValidEmail(value.trim())) {
                           return 'Please enter a valid email address';
                         }
                         return null;
