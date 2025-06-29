@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/auth.dart';
-import '../utils/date_formatter.dart';
 import 'chat_detail_screen.dart';
 import 'create_group_screen.dart';
 import 'group_chat_detail_screen.dart';
@@ -9,12 +8,11 @@ import 'profile_screen.dart';
 import 'stats_screen.dart';
 import 'all_expenses_screen.dart';
 import 'balance_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'verify_email_screen.dart';
-import 'group_management_screen.dart';
-import '../widgets/edit_group_name_dialog.dart';
-import '../widgets/unread_badge.dart';
+import '../widgets/chat_list_item.dart';
+import '../widgets/empty_chat_state.dart';
+import '../widgets/group_actions_bottom_sheet.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -406,86 +404,28 @@ class _ChatListScreenState extends State<ChatListScreen>
     if (_users.isEmpty) {
       return RefreshIndicator(
         onRefresh: _loadData,
-        child: const Center(child: Text('No other users found.')),
+        child: EmptyChatState.forDirectChats(),
       );
     }
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
         itemCount: _users.length,
         itemBuilder: (context, index) {
           final user = _users[index];
-          final lastMessage = user['last_message_content'];
-          final lastMessageTime = user['last_message_created_at'];
-          final lastMessageSenderId = user['last_message_sender_id'];
-          final lastMessageSenderName =
-              user['last_message_sender_display_name'];
-          final currentUserId = Supabase.instance.client.auth.currentUser?.id;
           final unreadCount = _directUnreadCounts[user['id']] ?? 0;
 
-          String subtitle;
-          if (lastMessage != null) {
-            final senderName =
-                lastMessageSenderId == currentUserId
-                    ? 'You'
-                    : (lastMessageSenderName ?? 'Unknown');
-            subtitle = '$senderName: $lastMessage';
-          } else {
-            subtitle = 'No messages yet';
-          }
-
-          return ListTile(
-            leading: _buildUserAvatar(
-              user['id'],
-              user['display_name'] ?? 'Unknown User',
-              Theme.of(context),
-            ),
-            title: Text(user['display_name'] ?? 'Unknown User'),
-            subtitle: Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (unreadCount > 0) ...[
-                  UnreadBadge.warning(count: unreadCount),
-                ],
-                const SizedBox(width: 8),
-                if (lastMessageTime != null)
-                  Text(
-                    DateFormatter.formatChatListTimestamp(lastMessageTime),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-              ],
-            ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => ChatDetailScreen(
-                        otherUserId: user['id'],
-                        otherUserName: user['display_name'] ?? 'Unknown User',
-                      ),
-                ),
-              );
-              // Mark messages as read and get updated count immediately
-              if (mounted) {
-                final count = await _chatService.markMessagesAsReadAndGetCount(
-                  user['id'],
-                );
-                setState(() {
-                  _directUnreadCounts[user['id']] = count;
-                });
-              }
-            },
+          return ChatListItem(
+            id: user['id'],
+            name: user['display_name'] ?? 'Unknown User',
+            lastMessage: user['last_message_content'],
+            lastMessageSenderName: user['last_message_sender_display_name'],
+            lastMessageSenderId: user['last_message_sender_id'],
+            lastMessageTime: user['last_message_created_at'],
+            unreadCount: unreadCount,
+            isGroup: false,
+            onTap: () => _onUserTap(user),
           );
         },
       ),
@@ -496,9 +436,22 @@ class _ChatListScreenState extends State<ChatListScreen>
     if (_groups.isEmpty) {
       return RefreshIndicator(
         onRefresh: _loadData,
-        child: const Center(child: Text('No groups found. Create one!')),
+        child: EmptyChatState.forGroups(
+          onActionPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreateGroupScreen(),
+              ),
+            );
+            if (result != false && mounted) {
+              _loadData();
+            }
+          },
+        ),
       );
     }
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
@@ -508,357 +461,80 @@ class _ChatListScreenState extends State<ChatListScreen>
           final lastMessage = group['last_message'];
           final unreadCount = _groupUnreadCounts[group['id']] ?? 0;
 
-          // Create subtitle with last message and sender
-          String subtitle = '';
-          if (lastMessage != null) {
-            final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-            final senderName =
-                lastMessage['sender_id'] == currentUserId
-                    ? 'You'
-                    : (lastMessage['sender_display_name'] ?? 'Unknown');
-            subtitle = '$senderName: ${lastMessage['content']}';
-          } else {
-            subtitle = 'No messages yet';
-          }
-
-          return ListTile(
-            leading: _buildGroupAvatar(
-              group['name'] ?? 'Unknown Group',
-              Theme.of(context),
-            ),
-            title: Text(
-              group['name'] ?? 'Unknown Group',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color:
-                    lastMessage != null
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (unreadCount > 0) ...[
-                  UnreadBadge.warning(count: unreadCount),
-                ],
-                const SizedBox(width: 8),
-                if (lastMessage != null)
-                  Text(
-                    DateFormatter.formatChatListTimestamp(
-                      lastMessage['created_at'],
-                    ),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-              ],
-            ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => GroupChatDetailScreen(
-                        groupId: group['id'],
-                        groupName: group['name'] ?? 'Unknown Group',
-                      ),
-                ),
-              );
-              // Mark group messages as read and get updated count immediately
-              if (mounted) {
-                final count = await _chatService
-                    .markGroupMessagesAsReadAndGetCount(group['id']);
-                setState(() {
-                  _groupUnreadCounts[group['id']] = count;
-                });
-              }
-            },
-            onLongPress: () async {
-              final isAdmin = await _chatService.isGroupAdmin(group['id']);
-              showModalBottomSheet(
-                context: context,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                builder: (context) {
-                  return SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.info_outline),
-                          title: const Text('View Group Details'),
-                          onTap: () async {
-                            Navigator.pop(context);
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => GroupManagementScreen(
-                                      groupId: group['id'],
-                                      groupName:
-                                          group['name'] ?? 'Unknown Group',
-                                    ),
-                              ),
-                            );
-                            if (mounted) _refreshGroupsOnly();
-                          },
-                        ),
-                        if (isAdmin) ...[
-                          ListTile(
-                            leading: const Icon(Icons.edit),
-                            title: const Text('Edit Group'),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final newName = await showDialog<String>(
-                                context: context,
-                                builder:
-                                    (context) => EditGroupNameDialog(
-                                      initialName:
-                                          group['name'] ?? 'Unknown Group',
-                                    ),
-                              );
-                              if (newName != null &&
-                                  newName.isNotEmpty &&
-                                  newName != group['name']) {
-                                try {
-                                  await _chatService.renameGroup(
-                                    groupId: group['id'],
-                                    newName: newName,
-                                  );
-                                  if (mounted) _refreshGroupsOnly();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Group renamed successfully!',
-                                      ),
-                                    ),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error renaming group: $e'),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.delete,
-                              color: Colors.red,
-                            ),
-                            title: const Text(
-                              'Delete Group',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder:
-                                    (context) => AlertDialog(
-                                      title: const Text('Delete Group?'),
-                                      content: const Text(
-                                        'Are you sure you want to delete this group and all its data? This cannot be undone.',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () =>
-                                                  Navigator.pop(context, false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed:
-                                              () =>
-                                                  Navigator.pop(context, true),
-                                          child: const Text(
-                                            'Delete',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                              );
-                              if (confirm == true) {
-                                try {
-                                  await _chatService.deleteGroup(group['id']);
-                                  if (mounted) _refreshGroupsOnly();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Group deleted successfully!',
-                                      ),
-                                    ),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error deleting group: $e'),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+          return ChatListItem(
+            id: group['id'],
+            name: group['name'] ?? 'Unknown Group',
+            lastMessage: lastMessage?['content'],
+            lastMessageSenderName: lastMessage?['sender_display_name'],
+            lastMessageSenderId: lastMessage?['sender_id'],
+            lastMessageTime: lastMessage?['created_at'],
+            unreadCount: unreadCount,
+            isGroup: true,
+            onTap: () => _onGroupTap(group),
+            onLongPress: () => _onGroupLongPress(group),
           );
         },
       ),
     );
   }
 
-  // Generate a unique gradient for each user based on their ID
-  List<Color> _getUserGradient(String userId, ThemeData theme) {
-    // Create a hash from the user ID to get consistent colors
-    final hash = userId.hashCode;
-    final colors = [
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.secondary,
-      ], // Primary to Secondary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.primary,
-      ], // Tertiary to Primary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.tertiary,
-      ], // Secondary to Tertiary
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.primary.withValues(alpha: 0.6),
-      ], // Primary variants
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.secondary.withValues(alpha: 0.6),
-      ], // Secondary variants
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.tertiary.withValues(alpha: 0.6),
-      ], // Tertiary variants
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.tertiary,
-      ], // Primary to Tertiary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.primary,
-      ], // Secondary to Primary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.secondary,
-      ], // Tertiary to Secondary
-      [
-        theme.colorScheme.primary.withValues(alpha: 0.6),
-        theme.colorScheme.secondary.withValues(alpha: 0.6),
-      ], // Muted variants
-    ];
-
-    // Use the hash to select a consistent gradient for each user
-    final index = (hash.abs() % colors.length);
-    return colors[index];
-  }
-
-  // Generate a unique gradient for each group based on their name
-  List<Color> _getGroupGradient(String groupName, ThemeData theme) {
-    // Create a hash from the group name to get consistent colors
-    final hash = groupName.hashCode;
-    final colors = [
-      [Colors.purple, Colors.pink], // Purple to Pink
-      [Colors.blue, Colors.cyan], // Blue to Cyan
-      [Colors.green, Colors.teal], // Green to Teal
-      [Colors.orange, Colors.red], // Orange to Red
-      [Colors.indigo, Colors.purple], // Indigo to Purple
-      [Colors.teal, Colors.green], // Teal to Green
-      [Colors.pink, Colors.orange], // Pink to Orange
-      [Colors.cyan, Colors.blue], // Cyan to Blue
-      [Colors.red, Colors.pink], // Red to Pink
-      [Colors.purple, Colors.indigo], // Purple to Indigo
-      [Colors.green, Colors.blue], // Green to Blue
-      [Colors.orange, Colors.yellow], // Orange to Yellow
-      [Colors.pink, Colors.purple], // Pink to Purple
-      [Colors.blue, Colors.green], // Blue to Green
-      [Colors.red, Colors.orange], // Red to Orange
-    ];
-
-    // Use the hash to select a consistent gradient for each group
-    final index = (hash.abs() % colors.length);
-    return colors[index];
-  }
-
-  // Build user avatar with gradient background
-  Widget _buildUserAvatar(String userId, String userName, ThemeData theme) {
-    final gradient = _getUserGradient(userId, theme);
-
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.transparent,
-        child: Text(
-          userName[0].toUpperCase(),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  Future<void> _onUserTap(Map<String, dynamic> user) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => ChatDetailScreen(
+              otherUserId: user['id'],
+              otherUserName: user['display_name'] ?? 'Unknown User',
+            ),
       ),
     );
+    // Mark messages as read and get updated count immediately
+    if (mounted) {
+      final count = await _chatService.markMessagesAsReadAndGetCount(
+        user['id'],
+      );
+      setState(() {
+        _directUnreadCounts[user['id']] = count;
+      });
+    }
   }
 
-  // Build group avatar with gradient background
-  Widget _buildGroupAvatar(String groupName, ThemeData theme) {
-    final gradient = _getGroupGradient(groupName, theme);
+  Future<void> _onGroupTap(Map<String, dynamic> group) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => GroupChatDetailScreen(
+              groupId: group['id'],
+              groupName: group['name'] ?? 'Unknown Group',
+            ),
+      ),
+    );
+    // Mark group messages as read and get updated count immediately
+    if (mounted) {
+      final count = await _chatService.markGroupMessagesAsReadAndGetCount(
+        group['id'],
+      );
+      setState(() {
+        _groupUnreadCounts[group['id']] = count;
+      });
+    }
+  }
 
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+  void _onGroupLongPress(Map<String, dynamic> group) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.transparent,
-        child: Text(
-          groupName[0].toUpperCase(),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+      builder:
+          (context) => GroupActionsBottomSheet(
+            groupId: group['id'],
+            groupName: group['name'] ?? 'Unknown Group',
+            onGroupUpdated: _refreshGroupsOnly,
+            onGroupDeleted: _refreshGroupsOnly,
           ),
-        ),
-      ),
     );
   }
 }
