@@ -6,6 +6,7 @@ import 'screens/profile_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/verify_email_screen.dart';
+import 'widgets/auth_wrapper.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -134,34 +135,6 @@ class MyApp extends StatelessWidget {
         '/chat_list': (context) => const ChatListScreen(),
         '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/verify_email': (context) => const VerifyEmailScreen(email: ''),
-      },
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final session = snapshot.data!.session;
-          if (session != null) {
-            // User is logged in, check if email is verified
-            final user = session.user;
-            if (user.emailConfirmedAt == null) {
-              // Email not verified, show verify email screen
-              return VerifyEmailScreen(email: user.email ?? '');
-            }
-            // Email is verified, show chat list
-            return const ChatListScreen();
-          }
-        }
-        // User is not logged in, show login screen
-        return const LoginScreen();
       },
     );
   }
