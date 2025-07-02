@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/chat_service.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String groupId;
@@ -28,6 +30,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   bool _isLoadingMembers = true;
   String? _loadMembersError;
   VoidCallback? _amountListener;
+  String? _titleError;
+  String? _amountError;
 
   @override
   void initState() {
@@ -51,6 +55,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     _amountController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  void _clearTitleError() {
+    if (_titleError != null) {
+      setState(() {
+        _titleError = null;
+      });
+    }
+  }
+
+  void _clearAmountError() {
+    if (_amountError != null) {
+      setState(() {
+        _amountError = null;
+      });
+    }
   }
 
   Future<void> _loadMembers() async {
@@ -82,19 +102,28 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   Future<void> _submitExpense() async {
     // Simple validation
+    bool hasError = false;
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an expense title')),
-      );
-      return;
+      setState(() {
+        _titleError = 'Please enter an expense title';
+      });
+      hasError = true;
     }
-
     if (_amountController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
-      return;
+      setState(() {
+        _amountError = 'Please enter an amount';
+      });
+      hasError = true;
+    } else {
+      final amount = double.tryParse(_amountController.text.trim());
+      if (amount == null || amount <= 0) {
+        setState(() {
+          _amountError = 'Please enter a valid amount';
+        });
+        hasError = true;
+      }
     }
+    if (hasError) return;
 
     if (_selectedPaidBy == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -191,7 +220,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1),
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -199,17 +228,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         children: [
                           Text(
                             widget.groupName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${_members.length} members',
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontSize: 14,
                             ),
                           ),
@@ -219,25 +252,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     const SizedBox(height: 24),
 
                     // Simple form
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Expense Title',
-                        hintText: 'e.g., Dinner, Movie tickets',
-                        border: OutlineInputBorder(),
-                      ),
+                      labelText: 'Expense Title',
+                      hintText: 'e.g., Dinner, Movie tickets',
+                      errorText: _titleError,
+                      onChanged: (value) => _clearTitleError(),
                     ),
                     const SizedBox(height: 16),
 
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _amountController,
-                      decoration: const InputDecoration(
-                        labelText: 'Total Amount',
-                        hintText: '0.00',
-                        prefixText: 'Rs ',
-                        border: OutlineInputBorder(),
-                      ),
+                      labelText: 'Total Amount',
+                      hintText: '100.00',
                       keyboardType: TextInputType.number,
+                      errorText: _amountError,
+                      onChanged: (value) => _clearAmountError(),
                     ),
                     const SizedBox(height: 16),
 
@@ -268,39 +298,38 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
                     // Simple info text
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(8),
+                      width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F9FF),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF0EA5E9)),
-                      ),
-                      child: Text(
-                        'Amount will be split among ${_members.length} members',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF0369A1),
+                        color: Theme.of(context).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onSecondary,
                         ),
+                      ),
+                      child: Row(
+                        spacing: 8,
+                        children: [
+                          Icon(Icons.info_outline),
+                          Text(
+                            'Amount will be split among ${_members.length} members',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
 
                     // Submit button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitExpense,
-                        child:
-                            _isLoading
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : const Text('Add Expense'),
-                      ),
+                    BrandFilledButton(
+                      text: 'Add Expense',
+                      onPressed: _isLoading ? null : _submitExpense,
+                      isLoading: _isLoading,
                     ),
                   ],
                 ),
