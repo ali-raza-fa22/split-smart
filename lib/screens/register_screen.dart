@@ -160,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 32),
                     Center(
                       child: SvgPicture.asset(
-                        'assets/icons/SPLITSMART.svg',
+                        'assets/icons/SPLITSMART_primary.svg',
                         height: 32,
                       ),
                     ),

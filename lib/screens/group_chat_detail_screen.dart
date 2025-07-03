@@ -8,6 +8,7 @@ import '../widgets/csv_export_button.dart';
 import 'group_management_screen.dart';
 import 'add_expense_screen.dart';
 import 'expenses_screen.dart';
+import '../widgets/ui/brand_text_form_field.dart';
 
 class GroupChatDetailScreen extends StatefulWidget {
   final String groupId;
@@ -452,14 +453,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                   onTap: _showGroupDetailsModal,
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: theme.colorScheme.secondaryContainer,
-                        child: Icon(
-                          Icons.group,
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,41 +490,53 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                     },
                     itemBuilder:
                         (context) => [
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'all',
                             child: Row(
                               children: [
-                                Icon(Icons.all_inbox),
+                                Icon(
+                                  Icons.all_inbox,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('All Messages'),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'general',
                             child: Row(
                               children: [
-                                Icon(Icons.chat),
+                                Icon(
+                                  Icons.chat,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('General'),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'expense',
                             child: Row(
                               children: [
-                                Icon(Icons.receipt),
+                                Icon(
+                                  Icons.receipt,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('Expenses'),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'payment',
                             child: Row(
                               children: [
-                                Icon(Icons.payment),
+                                Icon(
+                                  Icons.payment,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('Payments'),
                               ],
@@ -628,31 +633,43 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                     },
                     itemBuilder:
                         (context) => [
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'expenses',
                             child: Row(
                               children: [
-                                Icon(Icons.receipt_long),
+                                Icon(
+                                  Icons.receipt_long,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('View Expenses'),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'add_expense',
                             child: Row(
                               children: [
-                                Icon(Icons.add),
+                                Icon(
+                                  Icons.add,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('Add Expense'),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'manage',
                             child: Row(
                               children: [
-                                Icon(Icons.settings),
+                                Icon(
+                                  Icons.settings,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                ),
                                 SizedBox(width: 8),
                                 Text('Manage Group'),
                               ],
@@ -670,11 +687,8 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
             if (_selectedCategory != 'all')
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                color: theme.colorScheme.primaryContainer,
+                padding: const EdgeInsets.all(8),
+                color: theme.colorScheme.secondary.withAlpha(200),
                 child: Row(
                   children: [
                     Icon(
@@ -847,21 +861,19 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 12,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   color:
                       isSelected
-                          ? theme.colorScheme.inversePrimary.withValues(
-                            alpha: 0.9,
-                          )
+                          ? theme.colorScheme.primary.withValues(alpha: 0.9)
                           : isExpense
                           ? theme.colorScheme.tertiaryContainer.withValues(
-                            alpha: 0.3,
+                            alpha: 0.6,
                           )
                           : isPayment
                           ? theme.colorScheme.secondaryContainer.withValues(
-                            alpha: 0.3,
+                            alpha: 0.7,
                           )
                           : isMe
                           ? theme.colorScheme.primary
@@ -947,14 +959,14 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                               Icon(
                                 Icons.receipt,
                                 size: 14,
-                                color: theme.colorScheme.tertiary,
+                                color: theme.colorScheme.onPrimary,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'Expense',
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  color: theme.colorScheme.tertiary,
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -981,7 +993,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                               Icon(
                                 Icons.payment,
                                 size: 14,
-                                color: theme.colorScheme.secondary,
+                                color: theme.colorScheme.onPrimary,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -990,8 +1002,8 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                     ? 'Historical Payment'
                                     : 'Payment',
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  color: theme.colorScheme.secondary,
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1029,7 +1041,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                       'Paid by: ${message['payment_data']['paid_by_name'] ?? 'Unknown'}',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: theme.colorScheme.secondary,
+                                        color: theme.colorScheme.onPrimary,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -1041,14 +1053,14 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                     Icon(
                                       Icons.attach_money,
                                       size: 16,
-                                      color: theme.colorScheme.secondary,
+                                      color: theme.colorScheme.onPrimary,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Amount: Rs ${(message['payment_data']['amount_paid'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: theme.colorScheme.secondary,
+                                        color: theme.colorScheme.onPrimary,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -1060,7 +1072,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                     Icon(
                                       Icons.receipt,
                                       size: 16,
-                                      color: theme.colorScheme.secondary,
+                                      color: theme.colorScheme.onPrimary,
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
@@ -1068,7 +1080,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                         'For: ${message['payment_data']['expense_title'] ?? 'Unknown Expense'}',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: theme.colorScheme.secondary,
+                                          color: theme.colorScheme.onPrimary,
                                           fontWeight: FontWeight.w600,
                                         ),
                                         overflow: TextOverflow.ellipsis,
@@ -1226,35 +1238,22 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
         child: Row(
           children: [
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+              child: BrandTextFormField(
+                controller: _messageController,
+                hintText: 'Type a message...',
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Type a message...',
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 16,
-                    ),
-                  ),
-                  maxLines: null,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
+                borderRadius: 24.0,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+                borderColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                focusedBorderColor: theme.colorScheme.primary,
+                prefixIcon: null,
+                suffixIcon: null,
               ),
             ),
             const SizedBox(width: 12),

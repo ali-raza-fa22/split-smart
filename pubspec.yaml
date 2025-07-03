@@ -98,3 +98,4 @@ flutter:
     - .env
     - assets/chat_bg.jpg
     - assets/icons/SPLITSMART.svg
+    - assets/icons/SPLITSMART_primary.svg

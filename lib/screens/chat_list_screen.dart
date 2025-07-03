@@ -249,6 +249,8 @@ class _ChatListScreenState extends State<ChatListScreen>
       bottom: TabBar(
         controller: _tabController,
         tabs: const [Tab(text: 'Direct'), Tab(text: 'Groups')],
+        indicatorColor: Theme.of(context).colorScheme.primary,
+        labelColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body:
           _isLoading

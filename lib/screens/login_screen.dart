@@ -5,6 +5,7 @@ import 'verify_email_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -80,7 +81,10 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/chat_list');
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
         }
       } catch (e) {
         if (mounted) {
@@ -137,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 32),
                     Center(
                       child: SvgPicture.asset(
-                        'assets/icons/SPLITSMART.svg',
+                        'assets/icons/SPLITSMART_primary.svg',
                         height: 32,
                       ),
                     ),

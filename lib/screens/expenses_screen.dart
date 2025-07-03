@@ -167,12 +167,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               'Paid from loan! Outstanding loan: Rs ${paymentResult['amount_paid_from_loan'].toStringAsFixed(2)}';
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (mounted) {
@@ -210,22 +207,27 @@ class _ExpensesScreenState extends State<ExpensesScreen>
             Tab(text: 'All Expenses'),
             Tab(text: 'My Shares'),
           ],
+          indicatorColor: Theme.of(context).colorScheme.primary,
+          labelColor: Theme.of(context).colorScheme.onPrimary,
         ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildSummaryTab(theme),
-                  _buildAllExpensesTab(theme),
-                  _buildMySharesTab(theme),
-                ],
-              ),
+      body: SafeArea(
+        bottom: true,
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildSummaryTab(theme),
+                    _buildAllExpensesTab(theme),
+                    _buildMySharesTab(theme),
+                  ],
+                ),
+      ),
     );
   }
 
@@ -248,7 +250,11 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -365,7 +371,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                     decoration: BoxDecoration(
                       color:
                           isZero
-                              ? theme.colorScheme.surfaceVariant
+                              ? theme.colorScheme.surfaceContainerHighest
                               : isPositive
                               ? theme.colorScheme.primaryContainer.withValues(
                                 alpha: 0.3,
@@ -421,7 +427,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -429,7 +435,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
         // Payment Statistics with tappable sections
         Card(
-          elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -596,13 +601,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               if (paidMembers.isNotEmpty) ...[
                 Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    Icon(
+                      Icons.check_circle,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Paid (${paidMembers.length})',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.green,
+                        color: theme.colorScheme.tertiary,
                       ),
                     ),
                   ],
@@ -626,17 +635,21 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: theme.colorScheme.tertiary.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
+                              color: theme.colorScheme.tertiary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                           ),
                           child: Text(
                             '$displayName (Rs ${amount.toStringAsFixed(2)})',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.green.shade700,
+                              color: theme.colorScheme.tertiary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -650,13 +663,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               if (unpaidMembers.isNotEmpty) ...[
                 Row(
                   children: [
-                    Icon(Icons.pending, color: Colors.orange, size: 16),
+                    Icon(
+                      Icons.pending,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Pending (${unpaidMembers.length})',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.orange,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   ],
@@ -680,17 +697,21 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.3),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                           ),
                           child: Text(
                             '$displayName (Rs ${amount.toStringAsFixed(2)})',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.orange.shade700,
+                              color: theme.colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -704,7 +725,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withValues(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.3,
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -765,7 +786,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor:
-                  isPaid ? Colors.green : theme.colorScheme.primary,
+                  isPaid
+                      ? theme.colorScheme.tertiary
+                      : theme.colorScheme.primary,
               child: Icon(
                 isPaid ? Icons.check : Icons.pending,
                 color: Colors.white,
@@ -795,7 +818,10 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                       Text(
                         isPaid ? 'Paid' : 'Pending',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: isPaid ? Colors.green : Colors.orange,
+                          color:
+                              isPaid
+                                  ? theme.colorScheme.tertiary
+                                  : theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

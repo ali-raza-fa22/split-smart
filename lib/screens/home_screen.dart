@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/screens/all_expenses_screen.dart';
-import 'package:split_smart_supabase/screens/balance_screen.dart';
 import 'package:split_smart_supabase/screens/stats_screen.dart';
 import 'package:split_smart_supabase/screens/profile_screen.dart';
 import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
@@ -12,6 +10,7 @@ import '../services/chat_service.dart';
 import '../widgets/expense_details_modal.dart';
 import '../utils/app_utils.dart';
 import '../utils/date_formatter.dart';
+import '../widgets/ui/unread_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _defaultBalanceTitles = [];
   List<Map<String, dynamic>> _recentExpenses = [];
+  List<Map<String, dynamic>> _userExpenseShares = [];
   bool _isLoadingExpenses = true;
 
   @override
@@ -37,6 +37,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadUserData();
     _loadRecentExpenses();
+    _loadUserExpenseShares();
+  }
+
+  Future<void> _loadUserExpenseShares() async {
+    try {
+      final shares = await _chatService.getUserExpenseShares();
+      setState(() {
+        _userExpenseShares = shares;
+      });
+    } catch (e) {
+      // ignore error
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -184,22 +196,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(builder: (context) => const StatsScreen()),
                 );
                 break;
-              case 'expenses':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AllExpensesScreen(),
-                  ),
-                );
-                break;
-              case 'balance':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BalanceScreen(),
-                  ),
-                );
-                break;
               case 'logout':
                 _authService
                     .logout()
@@ -220,51 +216,40 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           itemBuilder:
               (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'profile',
                   child: Row(
                     children: [
-                      Icon(Icons.person),
+                      Icon(
+                        Icons.person,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Profile'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'stats',
                   child: Row(
                     children: [
-                      Icon(Icons.analytics),
+                      Icon(
+                        Icons.analytics,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Stats'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'expenses',
-                  child: Row(
-                    children: [
-                      Icon(Icons.receipt_long),
-                      SizedBox(width: 8),
-                      Text('All Expenses'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'balance',
-                  child: Row(
-                    children: [
-                      Icon(Icons.attach_money),
-                      SizedBox(width: 8),
-                      Text('Balance'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'logout',
                   child: Row(
                     children: [
-                      Icon(Icons.logout),
+                      Icon(
+                        Icons.logout,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Logout'),
                     ],
@@ -439,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           () => _showExpenseDetailsModal(
                                             _recentExpenses[i],
                                           ),
+                                      userExpenseShares: _userExpenseShares,
                                     ),
                               ),
                     ),
@@ -490,7 +476,12 @@ class _ActionButton extends StatelessWidget {
 class _HomeExpenseCard extends StatelessWidget {
   final Map<String, dynamic> expense;
   final VoidCallback onTap;
-  const _HomeExpenseCard({required this.expense, required this.onTap});
+  final List<Map<String, dynamic>> userExpenseShares;
+  const _HomeExpenseCard({
+    required this.expense,
+    required this.onTap,
+    required this.userExpenseShares,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -506,58 +497,82 @@ class _HomeExpenseCard extends StatelessWidget {
     } else {
       createdAt = DateTime.now();
     }
+    // Find if user has an unpaid share for this expense (amount_owed > 0 and is_paid == false)
+    final unpaidShare = userExpenseShares.firstWhere(
+      (share) =>
+          share['expense_id'] == expense['id'] &&
+          share['is_paid'] == false &&
+          (share['amount_owed'] as num?) != null &&
+          (share['amount_owed'] as num) > 0,
+      orElse: () => {},
+    );
+    final showBadge = unpaidShare.isNotEmpty;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.shadow.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppUtils.formatCurrency(amount),
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Flexible(
-              child: Text(
-                DateFormatter.formatFullDateTime(createdAt),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onPrimary,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.shadow.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  AppUtils.formatCurrency(amount),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: Text(
+                    DateFormatter.formatFullDateTime(createdAt),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showBadge)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: UnreadBadge(
+                count: 1,
+                size: 16,
+                color: theme.colorScheme.error,
+                showCount: false,
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

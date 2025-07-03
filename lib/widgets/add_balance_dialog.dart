@@ -135,7 +135,11 @@ class _AddBalanceDialogState extends State<AddBalanceDialog> {
                       child: Row(
                         children: [
                           if (iconName != null) ...[
-                            Icon(_getIconData(iconName), size: 20),
+                            Icon(
+                              _getIconData(iconName),
+                              size: 20,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
                             const SizedBox(width: 8),
                           ],
                           Expanded(child: Text(titleText)),

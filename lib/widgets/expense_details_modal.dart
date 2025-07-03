@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:split_smart_supabase/utils/date_formatter.dart';
 import '../services/chat_service.dart';
 import 'csv_export_button.dart';
 
@@ -91,66 +92,71 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
         DateTime.tryParse(widget.expenseData['created_at'] ?? '') ??
         DateTime.now();
 
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 32,
-                offset: const Offset(0, -12),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 14),
-                width: 50,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(3),
+    return SafeArea(
+      child: Material(
+        color: Colors.transparent,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
                 ),
-              ),
-
-              // Header
-              _buildHeader(title, amount, theme),
-
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Basic Details Section
-                      _buildBasicDetailsSection(
-                        paidByName,
-                        createdAt,
-                        description,
-                        theme,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // Payment Status Section
-                      _buildPaymentStatusSection(theme),
-                    ],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 32,
+                    offset: const Offset(0, -12),
                   ),
-                ),
+                ],
               ),
-            ],
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 14),
+                    width: 50,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+
+                  // Header
+                  _buildHeader(title, amount, theme),
+
+                  // Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Basic Details Section
+                          _buildBasicDetailsSection(
+                            paidByName,
+                            createdAt,
+                            description,
+                            theme,
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Payment Status Section
+                          _buildPaymentStatusSection(theme),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -161,11 +167,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withValues(alpha: 0.8),
-            theme.colorScheme.secondary,
-          ],
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -191,7 +193,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               child: const Icon(
                 Icons.receipt_long,
                 color: Colors.white,
-                size: 24,
+                size: 18,
               ),
             ),
             const SizedBox(width: 16),
@@ -237,10 +239,10 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.3),
                   width: 1,
@@ -289,7 +291,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Basic Details',
+            'Details',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -302,7 +304,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
 
           _buildDetailRow(
             'Date',
-            '${createdAt.day}/${createdAt.month}/${createdAt.year}',
+            DateFormatter.formatDate(createdAt),
             Icons.calendar_today,
             theme,
           ),
@@ -369,8 +371,8 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+            theme.colorScheme.primary,
+            theme.colorScheme.secondaryContainer,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -392,7 +394,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  color: theme.colorScheme.onPrimary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -417,7 +419,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -437,7 +439,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             _buildPaymentSection(
               'Paid (${paidMembers.length})',
               paidMembers,
-              theme.colorScheme.primary,
+              theme.colorScheme.onPrimary,
               Icons.check_circle,
               theme,
             ),
@@ -449,7 +451,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             _buildPaymentSection(
               'Pending (${unpaidMembers.length})',
               unpaidMembers,
-              theme.colorScheme.tertiary,
+              theme.colorScheme.onPrimary,
               Icons.pending,
               theme,
             ),
@@ -471,7 +473,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
           width: 1,
         ),
       ),

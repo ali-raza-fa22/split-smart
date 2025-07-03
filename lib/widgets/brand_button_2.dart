@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:split_smart_supabase/theme/theme.dart';
 
 class BrandButton2 extends StatelessWidget {
   final String label;
@@ -16,7 +17,6 @@ class BrandButton2 extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return SizedBox(
       width: width,
       child: ElevatedButton.icon(
@@ -26,16 +26,22 @@ class BrandButton2 extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor:
               isActive
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.surfaceVariant,
-          foregroundColor: theme.colorScheme.onPrimary,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onPrimary.withAlpha(120),
+          foregroundColor:
+              isActive
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : AppColors.text,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           side:
               isActive
-                  ? BorderSide(color: theme.colorScheme.primary, width: 2)
+                  ? BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  )
                   : BorderSide(color: Colors.grey.shade400, width: 1),
           textStyle: const TextStyle(fontWeight: FontWeight.w500),
         ),
