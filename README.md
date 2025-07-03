@@ -24,126 +24,36 @@ A Flutter-based expense sharing application that helps groups manage and split e
 - **Real-time**: Supabase Realtime
 - **Storage**: Supabase Storage
 
-## Getting Started
+## Screenshots
 
-### Prerequisites
-
-- Flutter SDK (latest stable version)
-- Dart SDK
-- Android Studio / VS Code
-- Supabase account
-
-### Installation
-
-1. **Clone the repository**
-
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-3. **Environment Setup**
-   - Create a `.env` file in the root directory
-   - Add your Supabase credentials:
-     ```
-     PROJECT_URL=your_supabase_project_url
-     API_KEY=your_supabase_anon_key
-     ```
-
-4. **Database Setup**
-   - Run the SQL migrations in the `supabase/migrations/` folder
-   - Execute them in chronological order (by timestamp)
-
-5. **Email Templates Setup**
-   - See [Email Templates Setup Guide](supabase/email_templates/README.md) for detailed instructions
-   - Configure password reset and email verification templates in Supabase dashboard
-
-6. **Run the app**
-   ```bash
-   flutter run
-   ```
-
-## Project Structure
-
-```
-split_smart_supabase/
-├── lib/
-│   ├── screens/          # UI screens
-│   ├── services/         # Business logic and API calls
-│   ├── utils/           # Utility functions
-│   └── widgets/         # Reusable UI components
-├── supabase/
-│   ├── migrations/      # Database migrations
-│   └── email_templates/ # Email templates and setup guide
-├── assets/              # Images and static files
-└── test/               # Unit and widget tests
-```
-
-## Authentication Flow
-
-1. **Registration**: User signs up with email and password
-2. **Email Verification**: OTP sent to verify email address
-3. **Login**: User logs in with verified credentials
-4. **Password Reset**: Forgot password with OTP verification
-
-## Key Features
-
-### Expense Management
-- Create expense groups
-- Add expenses with categories
-- Split expenses among group members
-- Track payment status
-- Generate expense reports
-
-### Real-time Communication
-- Group chat for expense discussions
-- Direct messaging between users
-- Real-time notifications
-
-### Data Export
-- CSV export for expense reports
-- Detailed breakdowns by group
-- Payment summaries
-
-## Configuration
-
-### Supabase Setup
-1. Create a new Supabase project
-2. Run database migrations
-3. Configure Row Level Security (RLS) policies
-4. Set up email templates for authentication
-
-### Email Templates
-For detailed email template setup instructions, see:
-**[📧 Email Templates Setup Guide](supabase/email_templates/README.md)**
-
-This guide includes:
-- HTML and text email templates
-- Supabase dashboard configuration
-- Template customization options
-- Troubleshooting tips
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-- Check the [Email Templates Setup Guide](supabase/email_templates/README.md) for authentication issues
-- Review the Supabase documentation
-- Open an issue in the repository
-
-## Acknowledgments
-
-- Flutter team for the amazing framework
-- Supabase for the backend infrastructure
-- The open-source community for various packages and tools
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+   <img src="screenshots/img.png" width="300">
+   <img src="screenshots/img_27.png" width="300">
+   <img src="screenshots/img_28.png" width="300">
+   <img src="screenshots/img_1.png" width="300">
+   <img src="screenshots/img_2.png" width="300">
+   <img src="screenshots/img_3.png" width="300">
+   <img src="screenshots/img_4.png" width="300">
+   <img src="screenshots/img_5.png" width="300">
+   <img src="screenshots/img_6.png" width="300">
+   <img src="screenshots/img_7.png" width="300">
+   <img src="screenshots/img_8.png" width="300">
+   <img src="screenshots/img_9.png" width="300">
+   <img src="screenshots/img_10.png" width="300">
+   <img src="screenshots/img_11.png" width="300">
+   <img src="screenshots/img_12.png" width="300">
+   <img src="screenshots/img_13.png" width="300">
+   <img src="screenshots/img_14.png" width="300">
+   <img src="screenshots/img_15.png" width="300">
+   <img src="screenshots/img_16.png" width="300">
+   <img src="screenshots/img_17.png" width="300">
+   <img src="screenshots/img_18.png" width="300">
+   <img src="screenshots/img_19.png" width="300">
+   <img src="screenshots/img_20.png" width="300">
+   <img src="screenshots/img_21.png" width="300">
+   <img src="screenshots/img_22.png" width="300">
+   <img src="screenshots/img_23.png" width="300">
+   <img src="screenshots/img_24.png" width="300">
+   <img src="screenshots/img_25.png" width="300">
+   
+</div>
