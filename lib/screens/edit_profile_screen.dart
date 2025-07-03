@@ -125,6 +125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 24),
                       BrandFilledButton(
                         text: 'Save Changes',
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         onPressed: _isLoading ? null : _updateProfile,
                         isLoading: _isLoading,
                       ),

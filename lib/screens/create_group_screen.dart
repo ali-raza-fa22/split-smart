@@ -141,13 +141,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Create Group',
-          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text('Create Group')),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -195,7 +189,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
+                              color: theme.colorScheme.tertiary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -285,6 +279,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       ),
                       child: BrandFilledButton(
                         text: 'Create Group',
+                        backgroundColor: theme.colorScheme.tertiary,
                         onPressed: _isCreatingGroup ? null : _createGroup,
                         isLoading: _isCreatingGroup,
                         icon: Icons.group_add,

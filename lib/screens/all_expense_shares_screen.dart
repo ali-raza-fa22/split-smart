@@ -182,7 +182,7 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'When you join groups with expenses, they\'ll appear here',
+                      'Roses are red, violets are blue.\nYou haven\'nt any expenses,\nyou know what to do.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

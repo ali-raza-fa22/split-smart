@@ -4,7 +4,7 @@ class AppColors {
   static const Color primary = Color(0xFFEC8036);
   static const Color error = Color(0xFFED493D);
   static const Color background = Color(0xFFFAFAFA);
-  static const Color teriary = Color(0xFF23CE7F);
+  static const Color tertiary = Color(0xFF23CE7F);
   static const Color secondary = Color(0xFFCC592D);
   static const Color onPrimary = Color(0xFFFFFFFF); // white text on primary
   static const Color text = Color.fromARGB(255, 22, 22, 22); // black text
@@ -27,14 +27,16 @@ ThemeData getAppTheme() {
       error: AppColors.error,
       surface: AppColors.background,
       onSurface: AppColors.text,
+      tertiary: AppColors.tertiary,
+      onTertiary: AppColors.onPrimary,
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: AppColors.teriary,
+      backgroundColor: AppColors.tertiary,
       foregroundColor: AppColors.onPrimary,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.teriary,
+        backgroundColor: AppColors.tertiary,
         foregroundColor: AppColors.onPrimary,
       ),
     ),

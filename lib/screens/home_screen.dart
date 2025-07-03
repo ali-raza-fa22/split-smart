@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/screens/all_expenses_screen.dart';
-import 'package:split_smart_supabase/screens/balance_screen.dart';
 import 'package:split_smart_supabase/screens/stats_screen.dart';
 import 'package:split_smart_supabase/screens/profile_screen.dart';
 import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
@@ -198,22 +196,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(builder: (context) => const StatsScreen()),
                 );
                 break;
-              case 'expenses':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AllExpensesScreen(),
-                  ),
-                );
-                break;
-              case 'balance':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BalanceScreen(),
-                  ),
-                );
-                break;
               case 'logout':
                 _authService
                     .logout()
@@ -234,51 +216,40 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           itemBuilder:
               (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'profile',
                   child: Row(
                     children: [
-                      Icon(Icons.person),
+                      Icon(
+                        Icons.person,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Profile'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'stats',
                   child: Row(
                     children: [
-                      Icon(Icons.analytics),
+                      Icon(
+                        Icons.analytics,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Stats'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'expenses',
-                  child: Row(
-                    children: [
-                      Icon(Icons.receipt_long),
-                      SizedBox(width: 8),
-                      Text('All Expenses'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'balance',
-                  child: Row(
-                    children: [
-                      Icon(Icons.attach_money),
-                      SizedBox(width: 8),
-                      Text('Balance'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'logout',
                   child: Row(
                     children: [
-                      Icon(Icons.logout),
+                      Icon(
+                        Icons.logout,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       SizedBox(width: 8),
                       Text('Logout'),
                     ],
@@ -543,11 +514,11 @@ class _HomeExpenseCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
+              color: theme.colorScheme.onPrimary,
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.shadow.withValues(alpha: 0.04),
+                  color: theme.colorScheme.shadow.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

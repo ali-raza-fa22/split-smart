@@ -247,7 +247,7 @@ class _AllBalanceTransactionsScreenState
   Color _colorForType(BuildContext context, String type) {
     switch (type) {
       case 'add':
-        return Colors.green;
+        return Theme.of(context).colorScheme.tertiary;
       case 'spend':
         return Colors.red;
       case 'loan':
@@ -382,6 +382,13 @@ class _AllBalanceTransactionsScreenState
 
     return MainScaffold(
       currentIndex: 1,
+      bottom: TabBar(
+        controller: _tabController,
+        tabs: const [Tab(text: 'All Payments'), Tab(text: 'Spendings')],
+        indicatorColor: Theme.of(context).colorScheme.primary,
+        labelColor: Theme.of(context).colorScheme.onPrimary,
+        // unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
+      ),
       body: Column(
         children: [
           // Filter indicator
@@ -389,20 +396,20 @@ class _AllBalanceTransactionsScreenState
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: theme.colorScheme.primaryContainer,
+              color: theme.colorScheme.tertiary,
               child: Row(
                 children: [
                   Icon(
                     Icons.filter_list,
                     size: 16,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: theme.colorScheme.onPrimary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       filterSummary,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -421,11 +428,11 @@ class _AllBalanceTransactionsScreenState
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              color: theme.colorScheme.surfaceVariant,
+              color: theme.colorScheme.surfaceContainerHighest,
               child: Text(
                 '${_filteredTransactions.length} transaction${_filteredTransactions.length == 1 ? '' : 's'}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.secondary,
                 ),
               ),
             ),
@@ -434,7 +441,7 @@ class _AllBalanceTransactionsScreenState
           Expanded(
             child:
                 _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator())
                     : _error != null
                     ? Center(child: Text('Error: $_error'))
                     : _filteredTransactions.isEmpty
@@ -543,6 +550,7 @@ class _AllBalanceTransactionsScreenState
                                       )
                                       : RefreshIndicator(
                                         onRefresh: _loadTransactions,
+
                                         child: ListView.builder(
                                           itemCount:
                                               tabFiltered.length +

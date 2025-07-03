@@ -128,10 +128,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                 const Text('• All expenses and expense shares'),
                 const Text('• The group itself'),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'This action cannot be undone!',
                   style: TextStyle(
-                    color: Colors.red,
+                    color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -156,21 +156,15 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         await _chatService.deleteGroup(widget.groupId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Group deleted successfully!'),
-              backgroundColor: Colors.green,
-            ),
+            const SnackBar(content: Text('Group deleted successfully!')),
           );
           Navigator.of(context).pop('deleted');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting group: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error deleting group: $e')));
         }
       }
     }
@@ -257,6 +251,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                 ? TabBar(
                   controller: _tabController,
                   tabs: const [Tab(text: 'Members'), Tab(text: 'Add Members')],
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
                 )
                 : null,
         actions: [
@@ -296,18 +292,20 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                       vertical: 8,
                     ),
                     child: ElevatedButton.icon(
-                      icon: Icon(Icons.delete, color: Colors.red),
+                      icon: Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.onError,
+                      ),
                       label: Text(
                         'Delete Group',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onError,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(alpha: 0.2),
-                        foregroundColor: Colors.red,
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                         minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(
-                          color: Colors.red.withValues(alpha: 0.2),
-                        ),
                       ),
                       onPressed: () async {
                         await _deleteGroup();
@@ -341,7 +339,11 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               const Spacer(),
               Chip(
                 label: Text('$_expensesCount Expenses'),
-                avatar: const Icon(Icons.receipt_long, size: 18),
+                avatar: Icon(
+                  Icons.receipt_long,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 labelStyle: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,

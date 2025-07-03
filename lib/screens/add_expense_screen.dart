@@ -185,20 +185,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Failed to load group members.',
-                      style: TextStyle(color: Colors.red, fontSize: 16),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _loadMembersError!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -301,23 +301,26 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       padding: const EdgeInsets.all(8),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Theme.of(context).colorScheme.tertiary,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.onSecondary,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
                       child: Row(
                         spacing: 8,
                         children: [
-                          Icon(Icons.info_outline),
+                          Icon(
+                            Icons.info_outline,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                           Text(
                             'Amount will be split among ${_members.length} members',
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSecondary,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ],
