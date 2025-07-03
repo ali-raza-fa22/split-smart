@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -84,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: const Text('Edit Profile'), centerTitle: false),
       body:
           _isLoading && _profile == null
               ? const Center(child: CircularProgressIndicator())
@@ -95,13 +97,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextFormField(
+                      BrandTextFormField(
                         controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter your username',
-                        ),
+                        labelText: 'Username',
+                        hintText: 'Enter your username',
+                        prefixIcon: Icons.person,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a username';
@@ -110,13 +110,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      BrandTextFormField(
                         controller: _displayNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Display Name',
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter your display name',
-                        ),
+                        labelText: 'Display Name',
+                        hintText: 'Enter your display name',
+                        prefixIcon: Icons.badge,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a display name';
@@ -125,16 +123,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _updateProfile,
-                          child:
-                              _isLoading
-                                  ? const CircularProgressIndicator()
-                                  : const Text('Save Changes'),
-                        ),
+                      BrandFilledButton(
+                        text: 'Save Changes',
+                        onPressed: _isLoading ? null : _updateProfile,
+                        isLoading: _isLoading,
                       ),
                     ],
                   ),

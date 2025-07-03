@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../utils/app_utils.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +19,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _lastAttemptedEmail;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -24,15 +31,52 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _clearEmailError() {
+    if (_emailError != null) {
+      setState(() {
+        _emailError = null;
+      });
+    }
+  }
+
+  void _clearPasswordError() {
+    if (_passwordError != null) {
+      setState(() {
+        _passwordError = null;
+      });
+    }
+  }
+
   Future<void> _login() async {
+    // Clear previous errors
+    _clearEmailError();
+    _clearPasswordError();
+
+    // Validate email format
+    final email = _emailController.text.trim();
+    if (!AppUtils.isValidEmail(email)) {
+      setState(() {
+        _emailError = 'Please enter a valid email address';
+      });
+      return;
+    }
+
+    // Validate password
+    if (_passwordController.text.isEmpty) {
+      setState(() {
+        _passwordError = 'Please enter your password';
+      });
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
-        _lastAttemptedEmail = _emailController.text.trim();
+        _lastAttemptedEmail = email;
       });
       try {
         await _authService.login(
-          email: _emailController.text.trim(),
+          email: email,
           password: _passwordController.text,
         );
         if (mounted) {
@@ -72,7 +116,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -91,14 +134,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
-                    // App Logo/Icon
-                    Icon(
-                      Icons.account_circle,
-                      size: 40,
-                      color: colorScheme.primary,
+                    const SizedBox(height: 32),
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/icons/SPLITSMART.svg',
+                        height: 32,
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 54),
                     Text(
                       'Welcome Back',
                       style: textTheme.headlineMedium?.copyWith(
@@ -116,36 +159,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email address',
-                        prefixIcon: Icon(
-                          Icons.email,
-                          color: colorScheme.primary,
-                        ),
-                      ),
+                      labelText: 'Email',
+                      hintText: 'Enter your email address',
+                      prefixIcon: Icons.email,
                       keyboardType: TextInputType.emailAddress,
+                      errorText: _emailError,
+                      onChanged: (value) => _clearEmailError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
+                        }
+                        if (!AppUtils.isValidEmail(value.trim())) {
+                          return 'Please enter a valid email address';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        prefixIcon: Icon(
-                          Icons.lock,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      obscureText: true,
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      prefixIcon: Icons.lock,
+                      suffixIcon:
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                      onSuffixIconPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                      obscureText: _obscurePassword,
+                      errorText: _passwordError,
+                      onChanged: (value) => _clearPasswordError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
@@ -166,31 +215,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _login,
-                        child:
-                            _isLoading
-                                ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                )
-                                : Text(
-                                  'Login',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ),
-                      ),
+                    const SizedBox(height: 14),
+                    BrandFilledButton(
+                      text: 'Login',
+                      onPressed: _isLoading ? null : _login,
+                      isLoading: _isLoading,
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -202,7 +231,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: colorScheme.primary),
                       ),
                     ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),

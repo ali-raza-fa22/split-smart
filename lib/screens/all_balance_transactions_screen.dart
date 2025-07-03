@@ -6,6 +6,8 @@ import '../services/balance_service.dart';
 import '../utils/date_formatter.dart';
 import 'balance_transaction_detail_screen.dart';
 import '../widgets/save_transaction_button.dart';
+import '../widgets/pie_chart_widget.dart';
+import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
 
 class AllBalanceTransactionsScreen extends StatefulWidget {
   const AllBalanceTransactionsScreen({super.key});
@@ -259,8 +261,8 @@ class _AllBalanceTransactionsScreenState
 
   List<Map<String, dynamic>> _getTabFilteredTransactions(int tabIndex) {
     if (tabIndex == 1) {
-      // Spendings: spend, loan, repay
-      return _filteredTransactions
+      // Spendings: spend, loan, repay - show all without filters
+      return _transactions
           .where(
             (tx) =>
                 tx['transaction_type'] == 'spend' ||
@@ -269,7 +271,7 @@ class _AllBalanceTransactionsScreenState
           )
           .toList();
     }
-    // All Payments: all
+    // All Payments: use filtered transactions
     return _filteredTransactions;
   }
 
@@ -319,19 +321,67 @@ class _AllBalanceTransactionsScreenState
     return parts.join(' • ');
   }
 
+  Widget _buildSpendingCategoryChart(
+    BuildContext context,
+    List<Map<String, dynamic>> spendings,
+    ThemeData theme,
+  ) {
+    // Group by transaction_type and sum amounts
+    final Map<String, double> categoryTotals = {};
+    for (final tx in spendings) {
+      final type = tx['transaction_type'] as String? ?? 'spend';
+      final amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+      categoryTotals[type] = (categoryTotals[type] ?? 0) + amount;
+    }
+
+    // Define color/icon for each type
+    final Map<String, Color> typeColors = {
+      'spend': Colors.red,
+      'loan': theme.colorScheme.error,
+      'repay': Colors.blue,
+    };
+    final Map<String, IconData> typeIcons = {
+      'spend': Icons.remove_circle_outline,
+      'loan': Icons.credit_card,
+      'repay': Icons.check_circle_outline,
+    };
+    final Map<String, String> typeLabels = {
+      'spend': 'Spend',
+      'loan': 'Loan',
+      'repay': 'Repay',
+    };
+
+    final chartData =
+        categoryTotals.entries
+            .where((e) => e.value > 0)
+            .map(
+              (e) => ChartDataItem(
+                label: typeLabels[e.key] ?? e.key,
+                value: e.value,
+                color: typeColors[e.key] ?? theme.colorScheme.primary,
+                icon: typeIcons[e.key],
+              ),
+            )
+            .toList();
+
+    return PieChartWidget(
+      data: chartData,
+      title: 'Spending by Category',
+      subtitle: 'How your spending is distributed',
+      size: 160,
+      showLegend: true,
+      showCenterText: true,
+      centerText: 'Total',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final filterSummary = _getFilterSummary();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('All Transactions'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [Tab(text: 'All Payments'), Tab(text: 'Spendings')],
-        ),
-      ),
+    return MainScaffold(
+      currentIndex: 1,
       body: Column(
         children: [
           // Filter indicator
@@ -493,13 +543,38 @@ class _AllBalanceTransactionsScreenState
                                       )
                                       : RefreshIndicator(
                                         onRefresh: _loadTransactions,
-                                        child: ListView.separated(
-                                          itemCount: tabFiltered.length,
-                                          separatorBuilder:
-                                              (context, i) =>
-                                                  const Divider(height: 0),
+                                        child: ListView.builder(
+                                          itemCount:
+                                              tabFiltered.length +
+                                              (tabIndex == 1 &&
+                                                      tabFiltered.isNotEmpty
+                                                  ? 1
+                                                  : 0),
                                           itemBuilder: (context, i) {
-                                            final tx = tabFiltered[i];
+                                            // Show pie chart as first item in spending tab
+                                            if (tabIndex == 1 &&
+                                                tabFiltered.isNotEmpty &&
+                                                i == 0) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
+                                                child:
+                                                    _buildSpendingCategoryChart(
+                                                      context,
+                                                      tabFiltered,
+                                                      theme,
+                                                    ),
+                                              );
+                                            }
+
+                                            // Adjust index for transaction items when pie chart is present
+                                            final txIndex =
+                                                tabIndex == 1 &&
+                                                        tabFiltered.isNotEmpty
+                                                    ? i - 1
+                                                    : i;
+                                            final tx = tabFiltered[txIndex];
                                             final type =
                                                 tx['transaction_type']
                                                     as String? ??
@@ -512,85 +587,95 @@ class _AllBalanceTransactionsScreenState
                                                 tx['title'] as String? ?? '';
                                             final date =
                                                 tx['created_at'] as String?;
-                                            return ListTile(
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 10,
+
+                                            return Column(
+                                              children: [
+                                                if (i > 0 || tabIndex == 0)
+                                                  const Divider(height: 0),
+                                                ListTile(
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 10,
+                                                      ),
+                                                  leading: Icon(
+                                                    _iconForType(type),
+                                                    color: _colorForType(
+                                                      context,
+                                                      type,
+                                                    ),
+                                                    size: 32,
                                                   ),
-                                              leading: Icon(
-                                                _iconForType(type),
-                                                color: _colorForType(
-                                                  context,
-                                                  type,
+                                                  title: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        DateFormatter.formatFullDateTime(
+                                                          date,
+                                                        ),
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        title,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        'Rs ${amount.toStringAsFixed(2)}',
+                                                        style: TextStyle(
+                                                          color: _colorForType(
+                                                            context,
+                                                            type,
+                                                          ),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 18,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        type[0].toUpperCase() +
+                                                            type.substring(1),
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: _colorForType(
+                                                            context,
+                                                            type,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  trailing:
+                                                      SaveTransactionButton(
+                                                        transaction: tx,
+                                                        isCompact: true,
+                                                      ),
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder:
+                                                            (context) =>
+                                                                BalanceTransactionDetailScreen(
+                                                                  transaction:
+                                                                      tx,
+                                                                ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
-                                                size: 32,
-                                              ),
-                                              title: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    DateFormatter.formatFullDateTime(
-                                                      date,
-                                                    ),
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    title,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    'Rs ${amount.toStringAsFixed(2)}',
-                                                    style: TextStyle(
-                                                      color: _colorForType(
-                                                        context,
-                                                        type,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 18,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    type[0].toUpperCase() +
-                                                        type.substring(1),
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: _colorForType(
-                                                        context,
-                                                        type,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              trailing: SaveTransactionButton(
-                                                transaction: tx,
-                                                isCompact: true,
-                                              ),
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder:
-                                                        (context) =>
-                                                            BalanceTransactionDetailScreen(
-                                                              transaction: tx,
-                                                            ),
-                                                  ),
-                                                );
-                                              },
+                                              ],
                                             );
                                           },
                                         ),

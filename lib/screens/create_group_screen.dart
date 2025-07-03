@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -17,6 +19,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final List<String> _selectedUserIds = [];
   bool _isLoading = true;
   bool _isCreatingGroup = false;
+  String? _groupNameError;
 
   @override
   void initState() {
@@ -28,6 +31,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   void dispose() {
     _groupNameController.dispose();
     super.dispose();
+  }
+
+  void _clearGroupNameError() {
+    if (_groupNameError != null) {
+      setState(() {
+        _groupNameError = null;
+      });
+    }
   }
 
   Future<void> _loadUsers() async {
@@ -64,49 +75,79 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   Future<void> _createGroup() async {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedUserIds.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select at least one member.')),
-        );
-        return;
-      }
+    _clearGroupNameError();
 
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final groupName = _groupNameController.text.trim();
+
+    // Validate group name length
+    if (groupName.length < 2) {
       setState(() {
-        _isCreatingGroup = true;
+        _groupNameError = 'Group name must be at least 2 characters long';
       });
+      return;
+    }
 
-      try {
-        await _chatService.createGroup(
-          name: _groupNameController.text.trim(),
-          memberIds: _selectedUserIds,
+    if (groupName.length > 50) {
+      setState(() {
+        _groupNameError = 'Group name must be less than 50 characters';
+      });
+      return;
+    }
+
+    if (_selectedUserIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one member.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCreatingGroup = true;
+    });
+
+    try {
+      await _chatService.createGroup(
+        name: groupName,
+        memberIds: _selectedUserIds,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Group created successfully!')),
         );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Group created successfully!')),
-          );
-          Navigator.of(context).pop();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error creating group: $e')));
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isCreatingGroup = false;
-          });
-        }
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error creating group: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingGroup = false;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Group')),
+      appBar: AppBar(
+        title: Text(
+          'Create Group',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
+      ),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -116,37 +157,97 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: TextFormField(
+                      child: BrandTextFormField(
                         controller: _groupNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Group Name',
-                          border: OutlineInputBorder(),
-                        ),
+                        labelText: 'Group Name',
+                        hintText: 'Enter group name',
+                        prefixIcon: Icons.group,
+                        errorText: _groupNameError,
+                        onChanged: (value) => _clearGroupNameError(),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter a group name';
+                          }
+                          if (value.trim().length < 2) {
+                            return 'Group name must be at least 2 characters long';
+                          }
+                          if (value.trim().length > 50) {
+                            return 'Group name must be less than 50 characters';
                           }
                           return null;
                         },
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                      ).copyWith(bottom: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Select Members (${_selectedUserIds.length}/${AppConstants.maxMembersAllowed})',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Select Members',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${_selectedUserIds.length}/${AppConstants.maxMembersAllowed}',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 8),
                     Expanded(
                       child:
                           _users.isEmpty
-                              ? const Center(child: Text('No users to select.'))
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      size: 64,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No users to select',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Other users will appear here once they join the app',
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              )
                               : ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 itemCount: _users.length,
                                 itemBuilder: (context, index) {
                                   final user = _users[index];
@@ -176,27 +277,22 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 },
                               ),
                     ),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 16.0,
+                        right: 16.0,
+                        bottom: 16.0 + MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: BrandFilledButton(
+                        text: 'Create Group',
+                        onPressed: _isCreatingGroup ? null : _createGroup,
+                        isLoading: _isCreatingGroup,
+                        icon: Icons.group_add,
+                      ),
+                    ),
                   ],
                 ),
               ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isCreatingGroup ? null : _createGroup,
-        label:
-            _isCreatingGroup
-                ? const Text('Creating...')
-                : const Text('Create Group'),
-        icon:
-            _isCreatingGroup
-                ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-                : const Icon(Icons.check),
-      ),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
+import '../widgets/expense_list_item.dart';
+import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
 
 class AllExpensesScreen extends StatefulWidget {
   const AllExpensesScreen({super.key});
@@ -177,14 +179,8 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('All Expenses'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [Tab(text: 'All Expenses'), Tab(text: 'My Shares')],
-        ),
-      ),
+    return MainScaffold(
+      currentIndex: 3,
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -198,9 +194,75 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
     );
   }
 
+  Widget _buildExpenseList({
+    required List<Map<String, dynamic>> items,
+    required String Function(Map<String, dynamic>) getTitle,
+    required String Function(Map<String, dynamic>) getGroupName,
+    required String Function(Map<String, dynamic>) getPaidByName,
+    required double Function(Map<String, dynamic>) getAmount,
+    required DateTime Function(Map<String, dynamic>) getCreatedAt,
+    String? Function(Map<String, dynamic>)? getDescription,
+    bool Function(Map<String, dynamic>)? getIsPaid,
+    VoidCallback? Function(Map<String, dynamic>)? getOnMarkPaid,
+    String? Function(Map<String, dynamic>)? getExpenseShareId,
+    void Function(Map<String, dynamic>)? onTap,
+    Widget? emptyState,
+  }) {
+    if (items.isEmpty) {
+      return emptyState ?? const Center(child: Text('No items found'));
+    }
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: SafeArea(
+        bottom: true,
+        child: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return ExpenseListItem(
+              title: getTitle(item),
+              groupName: getGroupName(item),
+              paidByName: getPaidByName(item),
+              amount: getAmount(item),
+              createdAt: getCreatedAt(item),
+              description: getDescription?.call(item),
+              isPaid: getIsPaid?.call(item) ?? true,
+              onTap: onTap != null ? () => onTap(item) : null,
+              onMarkPaid: getOnMarkPaid?.call(item),
+              expenseShareId: getExpenseShareId?.call(item),
+              showDivider: index != 0,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildAllExpensesTab(ThemeData theme) {
-    if (_allExpenses.isEmpty) {
-      return const Center(
+    return _buildExpenseList(
+      items: _allExpenses,
+      getTitle: (expense) => expense['title'] as String? ?? 'Unknown Expense',
+      getGroupName:
+          (expense) =>
+              (expense['groups'] as Map<String, dynamic>? ?? {})['name'] ??
+              'Unknown Group',
+      getPaidByName:
+          (expense) =>
+              (expense['profiles'] as Map<String, dynamic>? ??
+                  {})['display_name'] ??
+              'Unknown',
+      getAmount:
+          (expense) => (expense['total_amount'] as num?)?.toDouble() ?? 0.0,
+      getCreatedAt: (expense) {
+        try {
+          return DateTime.parse(expense['created_at'] ?? '');
+        } catch (e) {
+          return DateTime.now();
+        }
+      },
+      getDescription: (expense) => expense['description'] as String?,
+      onTap: (expense) => _showExpenseDetails(expense),
+      emptyState: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -210,122 +272,55 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
             Text('Join groups and create expenses to see them here!'),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _allExpenses.length,
-        itemBuilder: (context, index) {
-          final expense = _allExpenses[index];
-          final group = expense['groups'] as Map<String, dynamic>? ?? {};
-          final paidByProfile =
-              expense['profiles'] as Map<String, dynamic>? ?? {};
-          final paidByName = paidByProfile['display_name'] ?? 'Unknown';
-          final amount = (expense['total_amount'] as num?)?.toDouble() ?? 0.0;
-          final title = expense['title'] as String? ?? 'Unknown Expense';
-          final description = expense['description'] as String?;
-
-          DateTime createdAt;
-          try {
-            createdAt = DateTime.parse(expense['created_at'] ?? '');
-          } catch (e) {
-            createdAt = DateTime.now();
-          }
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              onTap: () => _showExpenseDetails(expense),
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primary,
-                child: const Icon(Icons.receipt, color: Colors.white),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Group: ${group['name'] ?? 'Unknown Group'}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  Text('Paid by: $paidByName'),
-                  if (description != null && description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    '${createdAt.day}/${createdAt.month}/${createdAt.year}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Rs ${amount.toStringAsFixed(2)}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'View Details',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
   Widget _buildMySharesTab(ThemeData theme) {
-    if (_userExpenseShares.isEmpty) {
-      return const Center(
+    return _buildExpenseList(
+      items: _userExpenseShares,
+      getTitle:
+          (share) =>
+              (share['expenses'] as Map<String, dynamic>? ?? {})['title']
+                  as String? ??
+              'Unknown Expense',
+      getGroupName:
+          (share) =>
+              ((share['expenses'] as Map<String, dynamic>? ?? {})['groups']
+                      as Map<String, dynamic>? ??
+                  {})['name'] ??
+              'Unknown Group',
+      getPaidByName:
+          (share) =>
+              ((share['expenses'] as Map<String, dynamic>? ?? {})['profiles']
+                      as Map<String, dynamic>? ??
+                  {})['display_name'] ??
+              'Unknown',
+      getAmount: (share) => (share['amount_owed'] as num?)?.toDouble() ?? 0.0,
+      getCreatedAt: (share) {
+        final expense = share['expenses'] as Map<String, dynamic>? ?? {};
+        try {
+          return DateTime.parse(expense['created_at'] ?? '');
+        } catch (e) {
+          return DateTime.now();
+        }
+      },
+      getDescription:
+          (share) =>
+              (share['expenses'] as Map<String, dynamic>? ?? {})['description']
+                  as String?,
+      getIsPaid: (share) => share['is_paid'] as bool? ?? false,
+      getOnMarkPaid:
+          (share) =>
+              !(share['is_paid'] as bool? ?? false)
+                  ? () => _markAsPaid(share['id'])
+                  : null,
+      getExpenseShareId: (share) => share['id'],
+      onTap:
+          (share) => _showExpenseDetails(
+            (share['expenses'] as Map<String, dynamic>? ?? {}),
+          ),
+      emptyState: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -339,129 +334,6 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
             Text('You don\'t owe anything yet!'),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _userExpenseShares.length,
-        itemBuilder: (context, index) {
-          final share = _userExpenseShares[index];
-          final expense = share['expenses'] as Map<String, dynamic>? ?? {};
-          final group = expense['groups'] as Map<String, dynamic>? ?? {};
-          final paidByProfile =
-              expense['profiles'] as Map<String, dynamic>? ?? {};
-          final paidByName = paidByProfile['display_name'] ?? 'Unknown';
-          final amountOwed = (share['amount_owed'] as num?)?.toDouble() ?? 0.0;
-          final isPaid = share['is_paid'] as bool? ?? false;
-          final title = expense['title'] as String? ?? 'Unknown Expense';
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Leading avatar
-                  CircleAvatar(
-                    backgroundColor:
-                        isPaid ? Colors.green : theme.colorScheme.primary,
-                    child: Icon(
-                      isPaid ? Icons.check : Icons.pending,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Main content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title and group
-                        Text(
-                          title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Group: ${group['name'] ?? 'Unknown Group'}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Paid by info
-                        Text('Paid by: $paidByName'),
-                        const SizedBox(height: 4),
-                        // Status badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isPaid
-                                    ? Colors.green.withValues(alpha: 0.1)
-                                    : Colors.orange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isPaid ? 'Paid' : 'Pending',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isPaid ? Colors.green : Colors.orange,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Amount and button
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Rs ${amountOwed.toStringAsFixed(2)}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (!isPaid) ...[
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 32,
-                          child: ElevatedButton(
-                            onPressed: () => _markAsPaid(share['id']),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Mark Paid',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }

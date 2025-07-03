@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
+import '../utils/app_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,6 +20,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
 
   @override
   void dispose() {
@@ -25,12 +34,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _clearEmailError() {
+    if (_emailError != null) {
+      setState(() {
+        _emailError = null;
+      });
+    }
+  }
+
+  void _clearPasswordError() {
+    if (_passwordError != null) {
+      setState(() {
+        _passwordError = null;
+      });
+    }
+  }
+
+  void _clearConfirmPasswordError() {
+    if (_confirmPasswordError != null) {
+      setState(() {
+        _confirmPasswordError = null;
+      });
+    }
+  }
+
   Future<void> _register() async {
+    // Clear previous errors
+    _clearEmailError();
+    _clearPasswordError();
+    _clearConfirmPasswordError();
+
+    // Validate email format
+    final email = _emailController.text.trim();
+    if (!AppUtils.isValidEmail(email)) {
+      setState(() {
+        _emailError = 'Please enter a valid email address';
+      });
+      return;
+    }
+
+    // Validate password
+    if (_passwordController.text.isEmpty) {
+      setState(() {
+        _passwordError = 'Please enter your password';
+      });
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _passwordError = 'Password must be at least 6 characters';
+      });
+      return;
+    }
+
+    // Validate confirm password
+    if (_confirmPasswordController.text.isEmpty) {
+      setState(() {
+        _confirmPasswordError = 'Please confirm your password';
+      });
+      return;
+    }
+
+    if (_confirmPasswordController.text != _passwordController.text) {
+      setState(() {
+        _confirmPasswordError = 'Passwords do not match';
+      });
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
         await _authService.register(
-          email: _emailController.text.trim(),
+          email: email,
           password: _passwordController.text,
         );
         if (mounted) {
@@ -38,20 +115,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder:
-                  (context) =>
-                      VerifyEmailScreen(email: _emailController.text.trim()),
+              builder: (context) => VerifyEmailScreen(email: email),
             ),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
         }
       } finally {
         if (mounted) {
@@ -67,7 +139,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -86,14 +157,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
-                    // App Logo/Icon
-                    Icon(
-                      Icons.person_add,
-                      size: 40,
-                      color: colorScheme.primary,
+                    const SizedBox(height: 32),
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/icons/SPLITSMART.svg',
+                        height: 32,
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 54),
                     Text(
                       'Create an Account',
                       style: textTheme.headlineMedium?.copyWith(
@@ -104,43 +175,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Join Split Smart today',
+                      'Join Us today',
                       style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email address',
-                        prefixIcon: Icon(
-                          Icons.email,
-                          color: colorScheme.primary,
-                        ),
-                      ),
+                      labelText: 'Email',
+                      hintText: 'Enter your email address',
+                      prefixIcon: Icons.email,
                       keyboardType: TextInputType.emailAddress,
+                      errorText: _emailError,
+                      onChanged: (value) => _clearEmailError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
+                        }
+                        if (!AppUtils.isValidEmail(value.trim())) {
+                          return 'Please enter a valid email address';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        prefixIcon: Icon(
-                          Icons.lock,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      obscureText: true,
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      prefixIcon: Icons.lock,
+                      suffixIcon:
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                      onSuffixIconPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                      obscureText: _obscurePassword,
+                      errorText: _passwordError,
+                      onChanged: (value) => _clearPasswordError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
@@ -152,17 +229,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _confirmPasswordController,
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        hintText: 'Confirm your password',
-                        prefixIcon: Icon(
-                          Icons.lock_outline,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      obscureText: true,
+                      labelText: 'Confirm Password',
+                      hintText: 'Confirm your password',
+                      prefixIcon: Icons.lock_outline,
+                      suffixIcon:
+                          _obscureConfirmPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                      onSuffixIconPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                      obscureText: _obscureConfirmPassword,
+                      errorText: _confirmPasswordError,
+                      onChanged: (value) => _clearConfirmPasswordError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please confirm your password';
@@ -174,42 +257,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        child:
-                            _isLoading
-                                ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                )
-                                : Text(
-                                  'Register',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ),
-                      ),
+                    BrandFilledButton(
+                      text: 'Register',
+                      onPressed: _isLoading ? null : _register,
+                      isLoading: _isLoading,
                     ),
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pushReplacementNamed(context, '/login');
                       },
                       child: Text(
                         'Already have an account? Login',
                         style: TextStyle(color: colorScheme.primary),
                       ),
                     ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),

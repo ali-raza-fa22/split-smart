@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/auth.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/ui/brand_filled_button.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   final String email;
@@ -18,6 +21,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   bool _isLoading = false;
   bool _isResending = false;
   String? _userEmail;
+  String? _otpError;
 
   @override
   void initState() {
@@ -42,18 +46,43 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     super.dispose();
   }
 
-  Future<void> _verifyOTP() async {
-    if (_formKey.currentState!.validate()) {
-      if (_userEmail == null || _userEmail!.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Email not available. Please login again.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-        return;
-      }
+  void _clearOtpError() {
+    if (_otpError != null) {
+      setState(() {
+        _otpError = null;
+      });
+    }
+  }
 
+  Future<void> _verifyOTP() async {
+    // Clear previous errors
+    _clearOtpError();
+
+    // Validate OTP
+    if (_otpController.text.isEmpty) {
+      setState(() {
+        _otpError = 'Please enter the verification code';
+      });
+      return;
+    }
+
+    if (_otpController.text.length != 6) {
+      setState(() {
+        _otpError = 'Code must be 6 digits';
+      });
+      return;
+    }
+
+    if (_userEmail == null || _userEmail!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Email not available. Please login again.'),
+        ),
+      );
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
         await _authService.verifyOTP(
@@ -66,12 +95,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
         }
       } finally {
         if (mounted) {
@@ -86,7 +112,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Email not available. Please login again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -101,18 +126,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             content: const Text(
               'Verification code has been resent to your email',
             ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) {
@@ -129,7 +150,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     // If no email is available, show error message
     if (_userEmail == null || _userEmail!.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Verify Email')),
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -137,6 +157,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 32),
+                  Center(
+                    child: SvgPicture.asset(
+                      'assets/icons/SPLITSMART.svg',
+                      height: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 54),
                   Icon(Icons.error_outline, size: 80, color: colorScheme.error),
                   const SizedBox(height: 24),
                   Text(
@@ -156,10 +184,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  ElevatedButton(
+                  BrandFilledButton(
+                    text: 'Go to Login',
                     onPressed:
                         () => Navigator.pushReplacementNamed(context, '/login'),
-                    child: const Text('Go to Login'),
                   ),
                 ],
               ),
@@ -170,7 +198,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -189,8 +216,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
-                    // App Logo/Icon
+                    const SizedBox(height: 32),
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/icons/SPLITSMART.svg',
+                        height: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 54),
                     Icon(
                       Icons.verified_user,
                       size: 80,
@@ -214,21 +247,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    TextFormField(
+                    BrandTextFormField(
                       controller: _otpController,
-                      decoration: InputDecoration(
-                        labelText: 'Verification Code',
-                        hintText: 'Enter 6-digit code',
-                        prefixIcon: Icon(
-                          Icons.security,
-                          color: colorScheme.primary,
-                        ),
-                      ),
+                      labelText: 'Verification Code',
+                      hintText: 'Enter 6-digit code',
+                      prefixIcon: Icons.security,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
-                      ],
+                      errorText: _otpError,
+                      onChanged: (value) => _clearOtpError(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter the verification code';
@@ -240,30 +266,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _verifyOTP,
-                        child:
-                            _isLoading
-                                ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                )
-                                : Text(
-                                  'Verify',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ),
-                      ),
+                    BrandFilledButton(
+                      text: 'Verify',
+                      onPressed: _isLoading ? null : _verifyOTP,
+                      isLoading: _isLoading,
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -291,7 +297,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         style: TextStyle(color: colorScheme.primary),
                       ),
                     ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
