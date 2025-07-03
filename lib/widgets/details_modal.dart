@@ -273,11 +273,11 @@ void showDetailsModal(
           subtitle: subtitle,
           totalAmount: totalAmount,
           icon: icon,
-          children: children,
           isEmpty: isEmpty,
           emptyTitle: emptyTitle,
           emptySubtitle: emptySubtitle,
           emptyIcon: emptyIcon,
+          children: children,
         ),
   );
 }

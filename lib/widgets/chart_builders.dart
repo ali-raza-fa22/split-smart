@@ -42,19 +42,19 @@ class ChartBuilders {
         ChartDataItem(
           label: 'Owed',
           value: totalOwed,
-          color: theme.colorScheme.error,
+          color: Theme.of(context).colorScheme.error,
           icon: Icons.account_balance_wallet,
         ),
         ChartDataItem(
           label: 'Paid',
           value: totalPaid,
-          color: theme.colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
           icon: Icons.check_circle,
         ),
         ChartDataItem(
           label: 'Created',
           value: totalCreated,
-          color: theme.colorScheme.secondary,
+          color: Theme.of(context).colorScheme.secondary,
           icon: Icons.add_circle,
         ),
       ],
@@ -91,13 +91,13 @@ class ChartBuilders {
         ChartDataItem(
           label: 'Paid',
           value: paidExpenses.toDouble(),
-          color: Colors.green,
+          color: Theme.of(context).colorScheme.tertiary,
           icon: Icons.check_circle,
         ),
         ChartDataItem(
           label: 'Pending',
           value: pendingExpenses.toDouble(),
-          color: Colors.orange,
+          color: Theme.of(context).colorScheme.secondary,
           icon: Icons.pending,
         ),
       ],
@@ -119,13 +119,13 @@ class ChartBuilders {
         ChartDataItem(
           label: 'Average',
           value: AppUtils.calculateAverageAmount(expenseShares, 'amount_owed'),
-          color: theme.colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
           icon: Icons.calculate,
         ),
         ChartDataItem(
           label: 'Maximum',
           value: AppUtils.calculateMaxAmount(expenseShares, 'amount_owed'),
-          color: theme.colorScheme.error,
+          color: Theme.of(context).colorScheme.error,
           icon: Icons.trending_up,
         ),
       ],
@@ -159,7 +159,7 @@ class ChartBuilders {
         ChartDataItem(
           label: 'Pending',
           value: pendingExpenses.toDouble(),
-          color: Colors.orange,
+          color: Theme.of(context).colorScheme.primary,
           icon: Icons.pending,
         ),
     ];
@@ -208,7 +208,7 @@ class ChartBuilders {
         ChartDataItem(
           label: 'Active',
           value: activeGroups.toDouble(),
-          color: Colors.green,
+          color: Theme.of(context).colorScheme.tertiary,
           icon: Icons.chat,
         ),
       if (inactiveGroups > 0)
@@ -251,7 +251,7 @@ class ChartBuilders {
           label: 'Total Owed',
           value: AppUtils.formatCurrency(totalOwed),
           icon: Icons.account_balance_wallet,
-          color: theme.colorScheme.error,
+          color: Theme.of(context).colorScheme.error,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -263,7 +263,7 @@ class ChartBuilders {
           label: 'Total Paid',
           value: AppUtils.formatCurrency(totalPaid),
           icon: Icons.check_circle,
-          color: theme.colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -275,7 +275,7 @@ class ChartBuilders {
           label: 'Total Created',
           value: AppUtils.formatCurrency(totalCreated),
           icon: Icons.add_circle,
-          color: theme.colorScheme.secondary,
+          color: Theme.of(context).colorScheme.secondary,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -325,7 +325,7 @@ class ChartBuilders {
           label: 'Total Shares',
           value: totalExpenses.toString(),
           icon: Icons.list,
-          color: theme.colorScheme.tertiary,
+          color: Theme.of(context).colorScheme.tertiary,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -344,7 +344,7 @@ class ChartBuilders {
           label: 'Paid',
           value: paidExpenses.toString(),
           icon: Icons.check_circle,
-          color: Colors.green,
+          color: Theme.of(context).colorScheme.tertiary,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -356,7 +356,7 @@ class ChartBuilders {
           label: 'Pending',
           value: pendingExpenses.toString(),
           icon: Icons.pending,
-          color: Colors.orange,
+          color: Theme.of(context).colorScheme.primary,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -436,7 +436,7 @@ class ChartBuilders {
               'Paid',
               paidExpenses,
               total,
-              Colors.green,
+              Theme.of(context).colorScheme.tertiary,
               Icons.check_circle,
             ),
           if (pendingExpenses > 0)
@@ -445,7 +445,7 @@ class ChartBuilders {
               'Pending',
               pendingExpenses,
               total,
-              Colors.orange,
+              Theme.of(context).colorScheme.primary,
               Icons.pending,
             ),
         ],
@@ -506,7 +506,7 @@ class ChartBuilders {
             label: 'Active Groups',
             value: activeGroups.length.toString(),
             icon: Icons.chat,
-            color: Colors.green,
+            color: Theme.of(context).colorScheme.tertiary,
             onTap:
                 () => _showGroupListModal(
                   context,
@@ -569,7 +569,7 @@ class ChartBuilders {
               label: '$groupName • $lastActivity',
               value: '$memberCount members',
               icon: Icons.group,
-              color: theme.colorScheme.primary,
+              color: Theme.of(context).colorScheme.primary,
               onTap: null,
             );
           }).toList(),

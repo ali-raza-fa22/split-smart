@@ -43,7 +43,8 @@ class ExpenseListItem extends StatelessWidget {
           ),
           onTap: onTap,
           leading: CircleAvatar(
-            backgroundColor: isPaid ? Colors.green : theme.colorScheme.primary,
+            backgroundColor:
+                isPaid ? theme.colorScheme.tertiary : theme.colorScheme.primary,
             child: Icon(
               isPaid ? Icons.check : Icons.receipt,
               color: Colors.white,

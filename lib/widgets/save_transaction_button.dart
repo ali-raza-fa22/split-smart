@@ -23,13 +23,17 @@ class SaveTransactionButton extends StatelessWidget {
     if (isCompact) {
       return IconButton(
         onPressed: () => _saveTransaction(context),
-        icon: Icon(customIcon ?? Icons.save_alt, color: Colors.white, size: 20),
+        icon: Icon(
+          customIcon ?? Icons.save_alt,
+          color: Theme.of(context).colorScheme.onPrimary,
+          size: 20,
+        ),
         style: IconButton.styleFrom(
-          backgroundColor: Colors.white.withValues(alpha: 0.2),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.tertiary,
               width: 1,
             ),
           ),
