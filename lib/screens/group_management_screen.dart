@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/edit_group_name_dialog.dart';
+import '../utils/avatar_utils.dart';
 
 class GroupManagementScreen extends StatefulWidget {
   final String groupId;
@@ -365,15 +366,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               final isMemberAdmin = member['is_admin'] ?? false;
 
               return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage:
-                      profile['avatar_url'] != null
-                          ? NetworkImage(profile['avatar_url'])
-                          : null,
-                  child:
-                      profile['avatar_url'] == null
-                          ? Text(profile['display_name'][0].toUpperCase())
-                          : null,
+                leading: AvatarUtils.buildUserAvatar(
+                  member['user_id'],
+                  profile['display_name'] ?? 'Unknown User',
+                  Theme.of(context),
+                  radius: 20,
+                  fontSize: 16,
                 ),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -434,15 +432,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
       itemBuilder: (context, index) {
         final user = _availableUsers[index];
         return ListTile(
-          leading: CircleAvatar(
-            backgroundImage:
-                user['avatar_url'] != null
-                    ? NetworkImage(user['avatar_url'])
-                    : null,
-            child:
-                user['avatar_url'] == null
-                    ? Text(user['display_name'][0].toUpperCase())
-                    : null,
+          leading: AvatarUtils.buildUserAvatar(
+            user['id'],
+            user['display_name'] ?? 'Unknown User',
+            Theme.of(context),
+            radius: 20,
+            fontSize: 16,
           ),
           title: Text(user['display_name'] ?? 'Unknown User'),
           subtitle: Text(user['username'] ?? ''),

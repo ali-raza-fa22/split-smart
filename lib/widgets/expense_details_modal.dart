@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:split_smart_supabase/utils/date_formatter.dart';
 import '../services/chat_service.dart';
 import 'csv_export_button.dart';
+import '../utils/avatar_utils.dart';
 
 class ExpenseDetailsModal extends StatefulWidget {
   final Map<String, dynamic> expenseData;
@@ -270,6 +271,9 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     String? description,
     ThemeData theme,
   ) {
+    final paidByProfile =
+        widget.expenseData['profiles'] as Map<String, dynamic>?;
+    final paidById = paidByProfile?['id'] ?? '';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -298,17 +302,26 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             ),
           ),
           const SizedBox(height: 14),
-
-          _buildDetailRow('Paid by', paidByName, Icons.person, theme),
+          _buildDetailRow(
+            'Paid by',
+            paidByName,
+            Icons.person,
+            theme,
+            leading: AvatarUtils.buildUserAvatar(
+              paidById,
+              paidByName,
+              theme,
+              radius: 16,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 16),
-
           _buildDetailRow(
             'Date',
             DateFormatter.formatDate(createdAt),
             Icons.calendar_today,
             theme,
           ),
-
           if (description != null && description.isNotEmpty) ...[
             const SizedBox(height: 14),
             _buildDetailRow(
@@ -465,8 +478,9 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     String label,
     String value,
     IconData icon,
-    ThemeData theme,
-  ) {
+    ThemeData theme, {
+    Widget? leading,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -479,14 +493,15 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
-          ),
+          leading ??
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: theme.colorScheme.primary, size: 18),
+              ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -561,6 +576,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 members.map((member) {
                   final profile = member['profiles'] as Map<String, dynamic>?;
                   final displayName = profile?['display_name'] ?? 'Unknown';
+                  final userId = profile?['id'] ?? '';
                   final amount = (member['amount_owed'] as num).toDouble();
 
                   return Container(
@@ -576,12 +592,12 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          icon == Icons.check_circle
-                              ? Icons.person
-                              : Icons.person_outline,
-                          size: 14,
-                          color: color,
+                        AvatarUtils.buildUserAvatar(
+                          userId,
+                          displayName,
+                          theme,
+                          radius: 12,
+                          fontSize: 11,
                         ),
                         const SizedBox(width: 6),
                         Text(

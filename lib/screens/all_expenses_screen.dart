@@ -225,6 +225,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
+
             return ExpenseListItem(
               title: getTitle(item),
               groupName: getGroupName(item),

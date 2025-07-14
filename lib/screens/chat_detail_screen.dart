@@ -4,6 +4,7 @@ import '../utils/date_formatter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../widgets/ui/brand_text_form_field.dart';
+import '../utils/avatar_utils.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String otherUserId;
@@ -343,32 +344,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               : AppBar(
                 title: Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: theme.colorScheme.primary,
-                      child: Text(
-                        widget.otherUserName.isNotEmpty
-                            ? widget.otherUserName[0].toUpperCase()
-                            : '?',
-                        style: TextStyle(color: theme.colorScheme.onPrimary),
-                      ),
+                    AvatarUtils.buildUserAvatar(
+                      widget.otherUserId,
+                      widget.otherUserName,
+                      theme,
+                      radius: 20,
+                      fontSize: 16,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.otherUserName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Online',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        widget.otherUserName,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -622,13 +609,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 color: theme.colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(16),
               child: SafeArea(
                 child: Row(
                   children: [
@@ -639,23 +626,52 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         maxLines: null,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
-                        onChanged: (_) => setState(() {}),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
-                          vertical: 10,
+                          vertical: 12,
                         ),
+                        borderRadius: 24.0,
+                        fillColor: theme.colorScheme.surfaceContainerHighest,
+                        borderColor: theme.colorScheme.outline.withValues(
+                          alpha: 0.2,
+                        ),
+                        focusedBorderColor: theme.colorScheme.primary,
+                        prefixIcon: null,
+                        suffixIcon: null,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Container(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.3,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.send),
-                        color: theme.colorScheme.onPrimary,
+                        icon: Icon(
+                          Icons.send,
+                          size: 20,
+                          color: theme.colorScheme.onPrimary,
+                        ),
                         onPressed: _sendMessage,
+                        style: IconButton.styleFrom(
+                          padding: const EdgeInsets.all(12),
+                        ),
                       ),
                     ),
                   ],

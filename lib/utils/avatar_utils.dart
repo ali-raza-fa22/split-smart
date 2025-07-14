@@ -80,7 +80,7 @@ class AvatarUtils {
     return colors[index];
   }
 
-  // Build user avatar with gradient background
+  // Build user avatar with avatarUrl if present, fallback to Vercel avatar, then gradient
   static Widget buildUserAvatar(
     String userId,
     String userName,
@@ -88,8 +88,13 @@ class AvatarUtils {
     double radius = 20,
     double fontSize = 16,
     FontWeight fontWeight = FontWeight.bold,
+    String? avatarUrl, // <-- new optional param
   }) {
     final gradient = getUserGradient(userId, theme);
+    final initials = userName.isNotEmpty ? userName[0].toUpperCase() : null;
+    final fallbackUrl = getVercelAvatarUrl(userId, initials: initials);
+    final useUrl =
+        (avatarUrl != null && avatarUrl.isNotEmpty) ? avatarUrl : fallbackUrl;
 
     return Container(
       decoration: BoxDecoration(
@@ -103,6 +108,8 @@ class AvatarUtils {
       child: CircleAvatar(
         radius: radius,
         backgroundColor: Colors.transparent,
+        backgroundImage: NetworkImage(useUrl),
+        onBackgroundImageError: (_, __) {}, // fallback to text if image fails
         child: Text(
           userName.isNotEmpty ? userName[0].toUpperCase() : '?',
           style: TextStyle(
@@ -191,5 +198,29 @@ class AvatarUtils {
     } else {
       return getUserGradient(id, theme);
     }
+  }
+
+  /// Returns a Vercel avatar URL for the given username or userId.
+  /// Example: https://avatar.vercel.sh/username?size=120&rounded=60
+  static String getVercelAvatarUrl(
+    String identifier, {
+    int size = 120,
+    int rounded = 60,
+    bool svg = false,
+    String? initials,
+  }) {
+    final base = 'https://avatar.vercel.sh/';
+    final ext = svg ? '.svg' : '';
+    final params = <String, String>{
+      'size': size.toString(),
+      'rounded': rounded.toString(),
+    };
+    if (initials != null && svg) {
+      params['text'] = initials;
+    }
+    final query = params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+    return '$base$identifier$ext?$query';
   }
 }

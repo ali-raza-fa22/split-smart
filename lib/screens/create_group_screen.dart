@@ -3,6 +3,7 @@ import '../services/chat_service.dart';
 import '../utils/constants.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
+import '../utils/avatar_utils.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -243,7 +244,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               )
                               : ListView.builder(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                  horizontal: 8,
                                 ),
                                 itemCount: _users.length,
                                 itemBuilder: (context, index) {
@@ -261,6 +262,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                     ),
                                     subtitle: Text(user['username'] ?? ''),
                                     value: isSelected,
+                                    secondary: AvatarUtils.buildUserAvatar(
+                                      user['id'],
+                                      user['display_name'] ?? 'Unknown User',
+                                      Theme.of(context),
+                                      radius: 20,
+                                      fontSize: 16,
+                                    ),
                                     onChanged:
                                         !isSelected && !canSelectMore
                                             ? null
@@ -274,7 +282,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 },
                               ),
                     ),
-                    Padding(
+                    Container(
                       padding: EdgeInsets.only(
                         left: 16.0,
                         right: 16.0,

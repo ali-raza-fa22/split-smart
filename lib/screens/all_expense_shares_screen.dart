@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
+import '../utils/avatar_utils.dart';
 
 class AllExpenseSharesScreen extends StatefulWidget {
   const AllExpenseSharesScreen({super.key});
@@ -213,27 +214,12 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(12),
                       onTap: () => _showExpenseDetails(expense),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color:
-                              isPaid
-                                  ? theme.colorScheme.primary.withValues(
-                                    alpha: 0.2,
-                                  )
-                                  : theme.colorScheme.tertiary.withValues(
-                                    alpha: 0.2,
-                                  ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          isPaid ? Icons.check_circle : Icons.pending,
-                          color:
-                              isPaid
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.tertiary,
-                          size: 20,
-                        ),
+                      leading: AvatarUtils.buildUserAvatar(
+                        paidByProfile?['id'],
+                        paidByName,
+                        Theme.of(context),
+                        radius: 20,
+                        fontSize: 16,
                       ),
                       title: Text(
                         expense['title'] ?? 'Untitled Expense',

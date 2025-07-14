@@ -3,19 +3,21 @@ import 'package:flutter/material.dart';
 class StatItem extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final IconData? icon;
   final Color color;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? margin;
+  final Widget? avatar;
 
   const StatItem({
     super.key,
     required this.label,
     required this.value,
-    required this.icon,
+    this.icon,
     required this.color,
     this.onTap,
     this.margin,
+    this.avatar,
   });
 
   @override
@@ -46,14 +48,20 @@ class StatItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+            if (avatar != null) ...[avatar!, const SizedBox(width: 10)],
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 16),
               ),
-              child: Icon(icon, color: color, size: 16),
-            ),
+              const SizedBox(width: 14),
+            ] else ...[
+              const SizedBox(width: 0),
+            ],
             const SizedBox(width: 14),
             Expanded(
               child: Column(

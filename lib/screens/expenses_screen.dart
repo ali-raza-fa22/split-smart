@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
+import '../widgets/stat_item.dart';
+import '../utils/avatar_utils.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String groupId;
@@ -325,19 +327,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.account_balance_wallet,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Text(
                       'Member Balances',
                       style: TextStyle(
@@ -364,67 +353,26 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                   );
                   final memberName =
                       member['profiles']?['display_name'] ?? 'Unknown Member';
+                  final userId = member['user_id'] ?? '';
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color:
-                          isZero
-                              ? theme.colorScheme.surfaceContainerHighest
-                              : isPositive
-                              ? theme.colorScheme.primaryContainer.withValues(
-                                alpha: 0.3,
-                              )
-                              : theme.colorScheme.errorContainer.withValues(
-                                alpha: 0.3,
-                              ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color:
-                            isZero
-                                ? theme.colorScheme.outline.withValues(
-                                  alpha: 0.2,
-                                )
-                                : isPositive
-                                ? theme.colorScheme.primary.withValues(
-                                  alpha: 0.3,
-                                )
-                                : theme.colorScheme.error.withValues(
-                                  alpha: 0.3,
-                                ),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            memberName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          isZero
-                              ? 'Settled up'
-                              : '${isPositive ? '+' : ''}Rs ${(balance < 0 ? 0.0 : balance).toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isZero
-                                    ? theme.colorScheme.onSurfaceVariant
-                                    : isPositive
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.error,
-                          ),
-                        ),
-                      ],
+                  return StatItem(
+                    label: memberName,
+                    value:
+                        isZero
+                            ? 'Settled up'
+                            : '${isPositive ? '+' : ''}Rs ${(balance < 0 ? 0.0 : balance).toStringAsFixed(2)}',
+                    color:
+                        isZero
+                            ? theme.colorScheme.onSurfaceVariant
+                            : isPositive
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.error,
+                    avatar: AvatarUtils.buildUserAvatar(
+                      userId,
+                      memberName,
+                      theme,
+                      radius: 16,
+                      fontSize: 13,
                     ),
                   );
                 }),
@@ -524,9 +472,12 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           child: GestureDetector(
             onTap: () => _showExpenseDetails(expense),
             child: ExpansionTile(
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primary,
-                child: const Icon(Icons.receipt, color: Colors.white),
+              leading: AvatarUtils.buildUserAvatar(
+                paidByProfile?['id'] ?? '',
+                paidByProfile?['display_name'] ?? 'Unknown User',
+                Theme.of(context),
+                radius: 20,
+                fontSize: 16,
               ),
               title: Text(expense['title'], style: theme.textTheme.titleMedium),
               subtitle: Column(
@@ -626,6 +577,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                             member['profiles'] as Map<String, dynamic>?;
                         final displayName =
                             profile?['display_name'] ?? 'Unknown';
+                        final userId = profile?['id'] ?? '';
                         final amount =
                             (member['amount_owed'] as num).toDouble();
 
@@ -645,13 +597,26 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               ),
                             ),
                           ),
-                          child: Text(
-                            '$displayName (Rs ${amount.toStringAsFixed(2)})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.tertiary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AvatarUtils.buildUserAvatar(
+                                userId,
+                                displayName,
+                                theme,
+                                radius: 12,
+                                fontSize: 11,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$displayName (Rs ${amount.toStringAsFixed(2)})',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.tertiary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
@@ -688,6 +653,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                             member['profiles'] as Map<String, dynamic>?;
                         final displayName =
                             profile?['display_name'] ?? 'Unknown';
+                        final userId = profile?['id'] ?? '';
                         final amount =
                             (member['amount_owed'] as num).toDouble();
 
@@ -707,13 +673,26 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               ),
                             ),
                           ),
-                          child: Text(
-                            '$displayName (Rs ${amount.toStringAsFixed(2)})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AvatarUtils.buildUserAvatar(
+                                userId,
+                                displayName,
+                                theme,
+                                radius: 12,
+                                fontSize: 11,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$displayName (Rs ${amount.toStringAsFixed(2)})',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
@@ -751,7 +730,15 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   }
 
   Widget _buildMySharesTab(ThemeData theme) {
-    if (_userExpenseShares.isEmpty) {
+    final groupShares =
+        _userExpenseShares.where((share) {
+          final expense = share['expenses'] as Map<String, dynamic>?;
+          if (expense == null) return false;
+          final group = expense['groups'] as Map<String, dynamic>?;
+          return group != null && group['id'] == widget.groupId;
+        }).toList();
+
+    if (groupShares.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -771,9 +758,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _userExpenseShares.length,
+      itemCount: groupShares.length,
       itemBuilder: (context, index) {
-        final share = _userExpenseShares[index];
+        final share = groupShares[index];
         final expense = share['expenses'] as Map<String, dynamic>;
         final group = expense['groups'] as Map<String, dynamic>;
         final paidByProfile = expense['profiles'] as Map<String, dynamic>?;
@@ -784,15 +771,12 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor:
-                  isPaid
-                      ? theme.colorScheme.tertiary
-                      : theme.colorScheme.primary,
-              child: Icon(
-                isPaid ? Icons.check : Icons.pending,
-                color: Colors.white,
-              ),
+            leading: AvatarUtils.buildUserAvatar(
+              paidByProfile?['id'] ?? '',
+              paidByProfile?['display_name'] ?? 'Unknown User',
+              theme,
+              radius: 20,
+              fontSize: 16,
             ),
             title: Row(
               children: [

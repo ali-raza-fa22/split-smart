@@ -9,6 +9,7 @@ import 'group_management_screen.dart';
 import 'add_expense_screen.dart';
 import 'expenses_screen.dart';
 import '../widgets/ui/brand_text_form_field.dart';
+import '../utils/avatar_utils.dart';
 
 class GroupChatDetailScreen extends StatefulWidget {
   final String groupId;
@@ -847,7 +848,13 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
-            _buildUserAvatar(message['sender_id'], senderName, theme),
+            AvatarUtils.buildUserAvatar(
+              message['sender_id'],
+              senderName,
+              theme,
+              radius: 16,
+              fontSize: 12,
+            ),
             const SizedBox(width: 8),
           ],
           Flexible(
@@ -1141,86 +1148,6 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
     );
   }
 
-  // Generate a unique gradient for each user based on their ID
-  List<Color> _getUserGradient(String userId, ThemeData theme) {
-    // Create a hash from the user ID to get consistent colors
-    final hash = userId.hashCode;
-    final colors = [
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.secondary,
-      ], // Primary to Secondary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.primary,
-      ], // Tertiary to Primary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.tertiary,
-      ], // Secondary to Tertiary
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.primary.withValues(alpha: 0.7),
-      ], // Primary variants
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.secondary.withValues(alpha: 0.7),
-      ], // Secondary variants
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.tertiary.withValues(alpha: 0.7),
-      ], // Tertiary variants
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.tertiary,
-      ], // Primary to Tertiary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.primary,
-      ], // Secondary to Primary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.secondary,
-      ], // Tertiary to Secondary
-      [
-        theme.colorScheme.primary.withValues(alpha: 0.8),
-        theme.colorScheme.secondary.withValues(alpha: 0.8),
-      ], // Muted variants
-    ];
-
-    // Use the hash to select a consistent gradient for each user
-    final index = (hash.abs() % colors.length);
-    return colors[index];
-  }
-
-  // Get user avatar with gradient background
-  Widget _buildUserAvatar(String userId, String userName, ThemeData theme) {
-    final gradient = _getUserGradient(userId, theme);
-
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: CircleAvatar(
-        radius: 16,
-        backgroundColor: Colors.transparent,
-        child: Text(
-          userName[0].toUpperCase(),
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMessageInput(ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
@@ -1484,7 +1411,13 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: _buildUserAvatar(userId, displayName, theme),
+                    leading: AvatarUtils.buildUserAvatar(
+                      userId,
+                      displayName,
+                      theme,
+                      radius: 16,
+                      fontSize: 12,
+                    ),
                     title: Text(displayName),
                     trailing:
                         isAdmin
