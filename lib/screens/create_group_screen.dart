@@ -43,10 +43,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Future<void> _loadUsers() async {
     try {
-      final users = await _chatService.getUsers();
+      // Only show users with chat history
+      final users = await _chatService.getUsersWithLastMessage();
+      final usersWithHistory =
+          users.where((user) => user['last_message_content'] != null).toList();
       if (mounted) {
         setState(() {
-          _users = users;
+          _users = usersWithHistory;
           _isLoading = false;
         });
       }

@@ -720,8 +720,13 @@ class ChatService {
       final currentMemberIds =
           currentMembers.map((member) => member['user_id']).toList();
 
-      final allUsers = await getUsers();
-      return allUsers
+      // Only show users with chat history
+      final allUsers = await getUsersWithLastMessage();
+      final usersWithHistory =
+          allUsers
+              .where((user) => user['last_message_content'] != null)
+              .toList();
+      return usersWithHistory
           .where((user) => !currentMemberIds.contains(user['id']))
           .toList();
     } catch (e) {
