@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/utils/constants.dart';
+import 'package:SPLITSMART/utils/constants.dart';
 import '../utils/date_formatter.dart';
 
 class BalanceTransactionDetailCard extends StatelessWidget {

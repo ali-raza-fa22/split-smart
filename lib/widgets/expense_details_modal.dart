@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/utils/date_formatter.dart';
+import 'package:SPLITSMART/utils/date_formatter.dart';
 import '../services/chat_service.dart';
 import 'csv_export_button.dart';
 import '../utils/avatar_utils.dart';

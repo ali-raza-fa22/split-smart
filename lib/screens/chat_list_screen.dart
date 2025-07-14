@@ -9,7 +9,7 @@ import 'verify_email_screen.dart';
 import '../widgets/chat_list_item.dart';
 import '../widgets/empty_chat_state.dart';
 import '../widgets/group_actions_bottom_sheet.dart';
-import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});

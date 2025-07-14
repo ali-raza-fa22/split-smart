@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/theme/theme.dart';
+import 'package:SPLITSMART/theme/theme.dart';
 
 class BrandButton2 extends StatelessWidget {
   final String label;

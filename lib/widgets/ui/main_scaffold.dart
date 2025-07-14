@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:split_smart_supabase/screens/home_screen.dart';
-import 'package:split_smart_supabase/screens/all_balance_transactions_screen.dart';
-import 'package:split_smart_supabase/screens/chat_list_screen.dart';
-import 'package:split_smart_supabase/screens/all_expenses_screen.dart';
+import 'package:SPLITSMART/screens/home_screen.dart';
+import 'package:SPLITSMART/screens/all_balance_transactions_screen.dart';
+import 'package:SPLITSMART/screens/chat_list_screen.dart';
+import 'package:SPLITSMART/screens/all_expenses_screen.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget body;

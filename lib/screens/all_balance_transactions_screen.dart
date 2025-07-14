@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/widgets/brand_button_2.dart';
-import 'package:split_smart_supabase/widgets/categoryfilter_dialog.dart';
-import 'package:split_smart_supabase/widgets/datefilter_dialog.dart';
+import 'package:SPLITSMART/widgets/brand_button_2.dart';
+import 'package:SPLITSMART/widgets/categoryfilter_dialog.dart';
+import 'package:SPLITSMART/widgets/datefilter_dialog.dart';
 import '../services/balance_service.dart';
 import '../utils/date_formatter.dart';
 import 'balance_transaction_detail_screen.dart';
 import '../widgets/save_transaction_button.dart';
 import '../widgets/pie_chart_widget.dart';
-import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
 
 class AllBalanceTransactionsScreen extends StatefulWidget {
   const AllBalanceTransactionsScreen({super.key});

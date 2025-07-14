@@ -3,7 +3,7 @@ import '../services/chat_service.dart';
 import '../services/balance_service.dart';
 import '../widgets/expense_details_modal.dart';
 import '../widgets/expense_list_item.dart';
-import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
 
 class AllExpensesScreen extends StatefulWidget {
   const AllExpensesScreen({super.key});

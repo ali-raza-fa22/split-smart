@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/screens/home_screen.dart';
-import 'package:split_smart_supabase/screens/login_screen.dart';
-import 'package:split_smart_supabase/screens/verify_email_screen.dart';
+import 'package:SPLITSMART/screens/home_screen.dart';
+import 'package:SPLITSMART/screens/login_screen.dart';
+import 'package:SPLITSMART/screens/verify_email_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthWrapper extends StatelessWidget {

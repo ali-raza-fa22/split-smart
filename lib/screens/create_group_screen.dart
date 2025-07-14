@@ -17,10 +17,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _groupNameController = TextEditingController();
   final ChatService _chatService = ChatService();
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _allUsers = [];
   final List<String> _selectedUserIds = [];
   bool _isLoading = true;
   bool _isCreatingGroup = false;
+  bool _isSearching = false;
   String? _groupNameError;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -31,6 +35,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   void dispose() {
     _groupNameController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -62,6 +67,35 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _searchUsers(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _allUsers = [];
+        _isSearching = false;
+      });
+      return;
+    }
+    setState(() {
+      _isSearching = true;
+    });
+    try {
+      final allUsers = await _chatService.getUsers();
+      setState(() {
+        _allUsers = allUsers;
+        _isSearching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isSearching = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error searching users: $e')));
       }
     }
   }
@@ -144,6 +178,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
+    // If searching, filter _allUsers, else filter _users
+    final List<Map<String, dynamic>> filteredUsers;
+    if (_searchQuery.isNotEmpty) {
+      filteredUsers =
+          _allUsers.where((user) {
+            final username = (user['username'] ?? '').toString().toLowerCase();
+            final email = (user['email'] ?? '').toString().toLowerCase();
+            final query = _searchQuery.toLowerCase();
+            return username.contains(query) || email.contains(query);
+          }).toList();
+    } else {
+      filteredUsers = _users;
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text('Create Group')),
       body:
@@ -176,6 +224,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         },
                       ),
                     ),
+                    // Add search field
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: BrandTextFormField(
+                        controller: _searchController,
+                        labelText: 'Search users',
+                        hintText: 'Search by username or email',
+                        prefixIcon: Icons.search,
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                          _searchUsers(value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
@@ -210,7 +275,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     const SizedBox(height: 8),
                     Expanded(
                       child:
-                          _users.isEmpty
+                          _isSearching
+                              ? const Center(child: CircularProgressIndicator())
+                              : filteredUsers.isEmpty
                               ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -224,15 +291,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      'No users to select',
+                                      _searchQuery.isEmpty
+                                          ? 'No users to select'
+                                          : 'No users found',
                                       style: textTheme.titleMedium?.copyWith(
                                         color:
                                             theme.colorScheme.onSurfaceVariant,
                                       ),
+                                      textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Other users will appear here once they join the app',
+                                      _searchQuery.isEmpty
+                                          ? 'Other users will appear here once they join the app'
+                                          : 'Try a different search term',
                                       style: textTheme.bodyMedium?.copyWith(
                                         color:
                                             theme.colorScheme.onSurfaceVariant,
@@ -246,9 +318,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                 ),
-                                itemCount: _users.length,
+                                itemCount: filteredUsers.length,
                                 itemBuilder: (context, index) {
-                                  final user = _users[index];
+                                  final user = filteredUsers[index];
                                   final isSelected = _selectedUserIds.contains(
                                     user['id'],
                                   );
@@ -258,13 +330,21 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
                                   return CheckboxListTile(
                                     title: Text(
-                                      user['display_name'] ?? 'Unknown User',
+                                      user['display_name'] ??
+                                          user['username'] ??
+                                          user['email'] ??
+                                          '',
                                     ),
-                                    subtitle: Text(user['username'] ?? ''),
+                                    subtitle: Text(
+                                      user['username'] ?? user['email'] ?? '',
+                                    ),
                                     value: isSelected,
                                     secondary: AvatarUtils.buildUserAvatar(
                                       user['id'],
-                                      user['display_name'] ?? 'Unknown User',
+                                      user['display_name'] ??
+                                          user['username'] ??
+                                          user['email'] ??
+                                          '',
                                       Theme.of(context),
                                       avatarUrl: user['avatar_url'],
                                       radius: 20,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:split_smart_supabase/screens/stats_screen.dart';
-import 'package:split_smart_supabase/screens/profile_screen.dart';
-import 'package:split_smart_supabase/theme/theme.dart';
-import 'package:split_smart_supabase/widgets/ui/main_scaffold.dart';
+import 'package:SPLITSMART/screens/stats_screen.dart';
+import 'package:SPLITSMART/screens/profile_screen.dart';
+import 'package:SPLITSMART/theme/theme.dart';
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
 import '../services/auth.dart';
 import '../services/balance_service.dart';
 import '../widgets/ui/balance_display.dart';
