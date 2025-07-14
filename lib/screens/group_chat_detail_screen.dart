@@ -596,6 +596,12 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                           }
                           break;
                         case 'manage':
+                          // Fetch available users and admin status before navigating
+                          final availableUsers = await _chatService
+                              .getAvailableUsersForGroup(widget.groupId);
+                          final isAdmin = await _chatService.isGroupAdmin(
+                            widget.groupId,
+                          );
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -603,6 +609,10 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                   (context) => GroupManagementScreen(
                                     groupId: widget.groupId,
                                     groupName: _currentGroupName,
+                                    members: _membersInfo,
+                                    availableUsers: availableUsers,
+                                    isAdmin: isAdmin,
+                                    expensesCount: _expensesCount,
                                   ),
                             ),
                           );
@@ -850,10 +860,11 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
           if (!isMe) ...[
             AvatarUtils.buildUserAvatar(
               message['sender_id'],
-              senderName,
+              message['profiles']?['display_name'],
               theme,
-              radius: 16,
-              fontSize: 12,
+              radius: 18,
+              fontSize: 14,
+              avatarUrl: message['profiles']?['avatar_url'],
             ),
             const SizedBox(width: 8),
           ],
@@ -1385,7 +1396,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                 const SizedBox(height: 24),
                 // Export CSV Button
                 if (_expensesCount > 0)
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     child: CsvExportButton(
                       groupId: widget.groupId,
@@ -1414,6 +1425,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                     leading: AvatarUtils.buildUserAvatar(
                       userId,
                       displayName,
+                      avatarUrl: profile['avatar_url'],
                       theme,
                       radius: 16,
                       fontSize: 12,

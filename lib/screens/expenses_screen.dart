@@ -370,6 +370,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                     avatar: AvatarUtils.buildUserAvatar(
                       userId,
                       memberName,
+                      avatarUrl: member['avatar_url'],
                       theme,
                       radius: 16,
                       fontSize: 13,
@@ -473,8 +474,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
             onTap: () => _showExpenseDetails(expense),
             child: ExpansionTile(
               leading: AvatarUtils.buildUserAvatar(
-                paidByProfile?['id'] ?? '',
-                paidByProfile?['display_name'] ?? 'Unknown User',
+                paidByProfile?['id'],
+                paidByProfile?['display_name'],
+                avatarUrl: paidByProfile?['avatar_url'],
                 Theme.of(context),
                 radius: 20,
                 fontSize: 16,
@@ -603,6 +605,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               AvatarUtils.buildUserAvatar(
                                 userId,
                                 displayName,
+                                avatarUrl: profile?['avatar_url'],
                                 theme,
                                 radius: 12,
                                 fontSize: 11,
@@ -679,6 +682,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               AvatarUtils.buildUserAvatar(
                                 userId,
                                 displayName,
+                                avatarUrl: profile?['avatar_url'],
                                 theme,
                                 radius: 12,
                                 fontSize: 11,
@@ -772,8 +776,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: AvatarUtils.buildUserAvatar(
-              paidByProfile?['id'] ?? '',
-              paidByProfile?['display_name'] ?? 'Unknown User',
+              paidByProfile?['id'],
+              paidByProfile?['display_name'],
+              avatarUrl: paidByProfile?['avatar_url'],
               theme,
               radius: 20,
               fontSize: 16,

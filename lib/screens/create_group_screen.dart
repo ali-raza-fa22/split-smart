@@ -266,6 +266,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                       user['id'],
                                       user['display_name'] ?? 'Unknown User',
                                       Theme.of(context),
+                                      avatarUrl: user['avatar_url'],
                                       radius: 20,
                                       fontSize: 16,
                                     ),

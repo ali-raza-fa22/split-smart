@@ -95,6 +95,7 @@ class AvatarUtils {
     final fallbackUrl = getVercelAvatarUrl(userId, initials: initials);
     final useUrl =
         (avatarUrl != null && avatarUrl.isNotEmpty) ? avatarUrl : fallbackUrl;
+    final isVercelAvatar = (avatarUrl == null || avatarUrl.isEmpty);
 
     return Container(
       decoration: BoxDecoration(
@@ -110,14 +111,17 @@ class AvatarUtils {
         backgroundColor: Colors.transparent,
         backgroundImage: NetworkImage(useUrl),
         onBackgroundImageError: (_, __) {}, // fallback to text if image fails
-        child: Text(
-          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: fontSize,
-            fontWeight: fontWeight,
-          ),
-        ),
+        child:
+            isVercelAvatar
+                ? Text(
+                  userName.isNotEmpty ? userName[0].toUpperCase() : 'S',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: fontSize,
+                    fontWeight: fontWeight,
+                  ),
+                )
+                : null,
       ),
     );
   }

@@ -15,6 +15,7 @@ class ChatListItem extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final Widget? trailing;
+  final String? avatarUrl;
 
   const ChatListItem({
     super.key,
@@ -29,6 +30,7 @@ class ChatListItem extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.trailing,
+    this.avatarUrl,
   });
 
   @override
@@ -43,7 +45,15 @@ class ChatListItem extends StatelessWidget {
     Widget trailingWidget = trailing ?? _buildDefaultTrailing(context, theme);
 
     return ListTile(
-      leading: AvatarUtils.buildAvatar(id, name, theme, isGroup: isGroup),
+      leading:
+          isGroup
+              ? AvatarUtils.buildAvatar(id, name, theme, isGroup: true)
+              : AvatarUtils.buildUserAvatar(
+                id,
+                name,
+                theme,
+                avatarUrl: avatarUrl,
+              ),
       title: Text(
         name,
         style: isGroup ? const TextStyle(fontWeight: FontWeight.bold) : null,

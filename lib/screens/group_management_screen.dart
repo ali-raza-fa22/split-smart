@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/edit_group_name_dialog.dart';
 import '../utils/avatar_utils.dart';
@@ -7,11 +6,19 @@ import '../utils/avatar_utils.dart';
 class GroupManagementScreen extends StatefulWidget {
   final String groupId;
   final String groupName;
+  final List<Map<String, dynamic>> members;
+  final List<Map<String, dynamic>> availableUsers;
+  final bool isAdmin;
+  final int expensesCount;
 
   const GroupManagementScreen({
     super.key,
     required this.groupId,
     required this.groupName,
+    required this.members,
+    required this.availableUsers,
+    required this.isAdmin,
+    required this.expensesCount,
   });
 
   @override
@@ -20,19 +27,19 @@ class GroupManagementScreen extends StatefulWidget {
 
 class _GroupManagementScreenState extends State<GroupManagementScreen>
     with SingleTickerProviderStateMixin {
-  final ChatService _chatService = ChatService();
-  List<Map<String, dynamic>> _members = [];
-  List<Map<String, dynamic>> _availableUsers = [];
-  bool _isLoading = true;
-  bool _isAdmin = false;
+  // final ChatService _chatService = ChatService(); // Remove service
+  // List<Map<String, dynamic>> _members = [];
+  // List<Map<String, dynamic>> _availableUsers = [];
+  // bool _isLoading = true;
+  // bool _isAdmin = false;
   late TabController _tabController;
-  int _expensesCount = 0;
+  // int _expensesCount = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadData();
+    // _loadData(); // Remove
   }
 
   @override
@@ -41,41 +48,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final members = await _chatService.getGroupMembers(widget.groupId);
-      final isAdmin = await _chatService.isGroupAdmin(widget.groupId);
-      final availableUsers = await _chatService.getAvailableUsersForGroup(
-        widget.groupId,
-      );
-      final expensesCount = await _chatService.getGroupExpensesCount(
-        widget.groupId,
-      );
-
-      if (mounted) {
-        setState(() {
-          _members = members;
-          _isAdmin = isAdmin;
-          _availableUsers = availableUsers;
-          _expensesCount = expensesCount;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
+  // Remove _loadData and _isLoading
 
   Future<void> _renameGroup() async {
     final newName = await showDialog<String>(
@@ -85,10 +58,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
     if (newName != null && newName.trim().isNotEmpty) {
       try {
-        await _chatService.renameGroup(
-          groupId: widget.groupId,
-          newName: newName.trim(),
-        );
+        // await _chatService.renameGroup( // Original line commented out
+        //   groupId: widget.groupId,
+        //   newName: newName.trim(),
+        // );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Group renamed successfully!')),
@@ -154,7 +127,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
     if (confirmed == true) {
       try {
-        await _chatService.deleteGroup(widget.groupId);
+        // await _chatService.deleteGroup( // Original line commented out
+        //   widget.groupId,
+        // );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Group deleted successfully!')),
@@ -173,15 +148,16 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
   Future<void> _addMember(Map<String, dynamic> user) async {
     try {
-      await _chatService.addMemberToGroup(
-        groupId: widget.groupId,
-        userId: user['id'],
-      );
+      // await _chatService.addMemberToGroup( // Original line commented out
+      //   groupId: widget.groupId,
+      //   userId: user['id'],
+      // );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${user['display_name']} added to group!')),
         );
-        _loadData();
+        // _loadData(); // Original line commented out
+        // After adding, parent should refresh and pass new data down.
       }
     } catch (e) {
       if (mounted) {
@@ -217,10 +193,10 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
     if (confirmed == true) {
       try {
-        await _chatService.removeMemberFromGroup(
-          groupId: widget.groupId,
-          userId: member['user_id'],
-        );
+        // await _chatService.removeMemberFromGroup( // Original line commented out
+        //   groupId: widget.groupId,
+        //   userId: member['user_id'],
+        // );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -229,7 +205,8 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               ),
             ),
           );
-          _loadData();
+          // _loadData(); // Original line commented out
+          // After removing, parent should refresh and pass new data down.
         }
       } catch (e) {
         if (mounted) {
@@ -248,7 +225,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         title: Text(widget.groupName),
         centerTitle: false,
         bottom:
-            _isAdmin
+            widget.isAdmin
                 ? TabBar(
                   controller: _tabController,
                   tabs: const [Tab(text: 'Members'), Tab(text: 'Add Members')],
@@ -257,7 +234,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                 )
                 : null,
         actions: [
-          if (_isAdmin)
+          if (widget.isAdmin)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: _renameGroup,
@@ -269,55 +246,43 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         children: [
           Expanded(
             child:
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _isAdmin
+                widget.isAdmin
                     ? TabBarView(
                       controller: _tabController,
                       children: [_buildMembersList(), _buildAddMembersList()],
                     )
                     : _buildMembersList(),
           ),
-          FutureBuilder<bool>(
-            future: _chatService.isGroupAdmin(widget.groupId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SizedBox.shrink();
-              }
-              if (snapshot.data == true) {
-                return SafeArea(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.delete,
-                        color: Theme.of(context).colorScheme.onError,
-                      ),
-                      label: Text(
-                        'Delete Group',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onError,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                        foregroundColor: Theme.of(context).colorScheme.onError,
-                        minimumSize: const Size.fromHeight(48),
-                      ),
-                      onPressed: () async {
-                        await _deleteGroup();
-                      },
+          if (widget.isAdmin)
+            SafeArea(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: ElevatedButton.icon(
+                  icon: Icon(
+                    Icons.delete,
+                    color: Theme.of(context).colorScheme.onError,
+                  ),
+                  label: Text(
+                    'Delete Group',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onError,
                     ),
                   ),
-                );
-              }
-              return SizedBox.shrink();
-            },
-          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onError,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  onPressed: () async {
+                    await _deleteGroup();
+                  },
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -339,7 +304,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               ),
               const Spacer(),
               Chip(
-                label: Text('$_expensesCount Expenses'),
+                label: Text('${widget.expensesCount} Expenses'),
                 avatar: Icon(
                   Icons.receipt_long,
                   size: 18,
@@ -356,9 +321,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         const Divider(height: 1),
         Expanded(
           child: ListView.builder(
-            itemCount: _members.length,
+            itemCount: widget.members.length,
             itemBuilder: (context, index) {
-              final member = _members[index];
+              final member = widget.members[index];
               final profile = member['profiles'];
               final isCurrentUser =
                   member['user_id'] ==
@@ -368,8 +333,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               return ListTile(
                 leading: AvatarUtils.buildUserAvatar(
                   member['user_id'],
-                  profile['display_name'] ?? 'Unknown User',
+                  profile['display_name'],
                   Theme.of(context),
+                  avatarUrl: profile['avatar_url'],
                   radius: 20,
                   fontSize: 16,
                 ),
@@ -402,7 +368,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                 ),
                 subtitle: Text(profile['username'] ?? ''),
                 trailing:
-                    _isAdmin && !isCurrentUser && !isMemberAdmin
+                    widget.isAdmin && !isCurrentUser && !isMemberAdmin
                         ? IconButton(
                           icon: const Icon(
                             Icons.remove_circle_outline,
@@ -421,21 +387,22 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
   }
 
   Widget _buildAddMembersList() {
-    if (_availableUsers.isEmpty) {
+    if (widget.availableUsers.isEmpty) {
       return const Center(
         child: Text('No users available to add to the group.'),
       );
     }
 
     return ListView.builder(
-      itemCount: _availableUsers.length,
+      itemCount: widget.availableUsers.length,
       itemBuilder: (context, index) {
-        final user = _availableUsers[index];
+        final user = widget.availableUsers[index];
         return ListTile(
           leading: AvatarUtils.buildUserAvatar(
             user['id'],
             user['display_name'] ?? 'Unknown User',
             Theme.of(context),
+            avatarUrl: user['avatar_url'],
             radius: 20,
             fontSize: 16,
           ),

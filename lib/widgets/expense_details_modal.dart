@@ -310,6 +310,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             leading: AvatarUtils.buildUserAvatar(
               paidById,
               paidByName,
+              avatarUrl: paidByProfile?['avatar_url'],
               theme,
               radius: 16,
               fontSize: 13,
@@ -595,6 +596,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                         AvatarUtils.buildUserAvatar(
                           userId,
                           displayName,
+                          avatarUrl: profile?['avatar_url'],
                           theme,
                           radius: 12,
                           fontSize: 11,

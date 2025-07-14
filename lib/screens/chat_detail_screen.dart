@@ -9,11 +9,13 @@ import '../utils/avatar_utils.dart';
 class ChatDetailScreen extends StatefulWidget {
   final String otherUserId;
   final String otherUserName;
+  final String? avatarUrl;
 
   const ChatDetailScreen({
     super.key,
     required this.otherUserId,
     required this.otherUserName,
+    this.avatarUrl,
   });
 
   @override
@@ -350,6 +352,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       theme,
                       radius: 20,
                       fontSize: 16,
+                      avatarUrl: widget.avatarUrl,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

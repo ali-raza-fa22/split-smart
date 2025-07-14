@@ -305,6 +305,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             unreadCount: unreadCount,
             isGroup: false,
             onTap: () => _onUserTap(user),
+            avatarUrl: user['avatar_url'],
           );
         },
       ),
@@ -351,6 +352,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             isGroup: true,
             onTap: () => _onGroupTap(group),
             onLongPress: () => _onGroupLongPress(group),
+            avatarUrl: group['avatar_url'], // If you ever add group avatars
           );
         },
       ),
@@ -365,6 +367,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             (context) => ChatDetailScreen(
               otherUserId: user['id'],
               otherUserName: user['display_name'] ?? 'Unknown User',
+              avatarUrl: user['avatar_url'],
             ),
       ),
     );

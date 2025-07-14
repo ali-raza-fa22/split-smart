@@ -218,6 +218,7 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
                         paidByProfile?['id'],
                         paidByName,
                         Theme.of(context),
+                        avatarUrl: paidByProfile?['avatar_url'],
                         radius: 20,
                         fontSize: 16,
                       ),
