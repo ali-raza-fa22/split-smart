@@ -27,19 +27,12 @@ class GroupManagementScreen extends StatefulWidget {
 
 class _GroupManagementScreenState extends State<GroupManagementScreen>
     with SingleTickerProviderStateMixin {
-  // final ChatService _chatService = ChatService(); // Remove service
-  // List<Map<String, dynamic>> _members = [];
-  // List<Map<String, dynamic>> _availableUsers = [];
-  // bool _isLoading = true;
-  // bool _isAdmin = false;
   late TabController _tabController;
-  // int _expensesCount = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // _loadData(); // Remove
   }
 
   @override
@@ -47,8 +40,6 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
     _tabController.dispose();
     super.dispose();
   }
-
-  // Remove _loadData and _isLoading
 
   Future<void> _renameGroup() async {
     final newName = await showDialog<String>(
@@ -58,10 +49,6 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
     if (newName != null && newName.trim().isNotEmpty) {
       try {
-        // await _chatService.renameGroup( // Original line commented out
-        //   groupId: widget.groupId,
-        //   newName: newName.trim(),
-        // );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Group renamed successfully!')),
@@ -72,7 +59,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          ).showSnackBar(SnackBar(content: Text('Something bad happened')));
         }
       }
     }
@@ -140,7 +127,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error deleting group: $e')));
+          ).showSnackBar(SnackBar(content: Text('Error deleting group.')));
         }
       }
     }
@@ -148,22 +135,16 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
 
   Future<void> _addMember(Map<String, dynamic> user) async {
     try {
-      // await _chatService.addMemberToGroup( // Original line commented out
-      //   groupId: widget.groupId,
-      //   userId: user['id'],
-      // );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${user['display_name']} added to group!')),
         );
-        // _loadData(); // Original line commented out
-        // After adding, parent should refresh and pass new data down.
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened.')));
       }
     }
   }
@@ -212,7 +193,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          ).showSnackBar(SnackBar(content: Text('Something bad happened')));
         }
       }
     }

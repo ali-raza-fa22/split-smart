@@ -67,16 +67,6 @@ class GroupActionsBottomSheet extends StatelessWidget {
   }
 
   Future<void> _navigateToGroupManagement(BuildContext context) async {
-    // Import would be needed for GroupManagementScreen
-    // await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => GroupManagementScreen(
-    //       groupId: groupId,
-    //       groupName: groupName,
-    //     ),
-    //   ),
-    // );
     onGroupUpdated();
   }
 
@@ -99,7 +89,7 @@ class GroupActionsBottomSheet extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error renaming group: $e')));
+          ).showSnackBar(SnackBar(content: Text('Error renaming group.')));
         }
       }
     }
@@ -143,7 +133,7 @@ class GroupActionsBottomSheet extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error deleting group: $e')));
+          ).showSnackBar(SnackBar(content: Text('Error deleting group.')));
         }
       }
     }

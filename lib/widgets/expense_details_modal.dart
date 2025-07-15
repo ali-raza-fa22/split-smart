@@ -366,7 +366,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Error loading payment details: $_errorMessage',
+                'Error loading payment details.',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             ),

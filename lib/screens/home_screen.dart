@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading expenses: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error loading expenses.')));
       }
     }
   }
@@ -110,7 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading balance titles: $e')),
+            SnackBar(
+              content: Text('Something bad happened, please try again.'),
+            ),
           );
         }
         return;
@@ -156,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error adding balance: $e')),
+                      SnackBar(content: Text('Something bad happened.')),
                     );
                   }
                 }
@@ -211,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     .catchError((e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error logging out: $e')),
+                          SnackBar(content: Text('Something bad happened')),
                         );
                       }
                     });

@@ -67,7 +67,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading expenses: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error loading expenses.')));
       }
     }
   }
@@ -177,7 +177,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error marking as paid: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error marking as paid.')));
       }
     }
   }
@@ -529,7 +529,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Error loading payment status: ${snapshot.error}',
+              'Error loading payment',
               style: TextStyle(color: Colors.red),
             ),
           );

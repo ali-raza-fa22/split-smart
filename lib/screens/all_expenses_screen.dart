@@ -57,7 +57,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading expenses: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
         setState(() {
           _isLoading = false;
         });
@@ -170,7 +170,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error marking as paid: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
   }

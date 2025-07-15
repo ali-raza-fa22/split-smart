@@ -129,7 +129,7 @@ class SaveTransactionButton extends StatelessWidget {
         builder:
             (context) => AlertDialog(
               title: const Text('Save Failed'),
-              content: Text('Error saving transaction: $e'),
+              content: Text('Error saving transaction.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),

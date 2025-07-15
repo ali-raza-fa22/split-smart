@@ -95,7 +95,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading members: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error loading membere')));
       }
     }
   }
@@ -162,7 +162,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error adding expense: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error adding expense')));
       }
     } finally {
       if (mounted) {

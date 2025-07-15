@@ -165,7 +165,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
         setState(() {
           _isLoading = false;
         });

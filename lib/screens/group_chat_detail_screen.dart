@@ -110,9 +110,9 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
         setState(() {
           _isLoadingSummary = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading group summary: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading group summary')));
       }
     }
   }
@@ -199,7 +199,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error sending message: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
 
@@ -333,7 +333,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error checking existing payments: $e')),
+              SnackBar(content: Text('Error checking existing payments.')),
             );
           }
         }
@@ -427,7 +427,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting messages: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error deleting messages.')));
       }
     } finally {
       _clearSelection();

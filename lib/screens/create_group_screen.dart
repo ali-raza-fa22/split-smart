@@ -63,7 +63,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading users: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
         setState(() {
           _isLoading = false;
         });
@@ -95,7 +95,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error searching users: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
   }
@@ -162,7 +162,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error creating group: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error creating group')));
       }
     } finally {
       if (mounted) {

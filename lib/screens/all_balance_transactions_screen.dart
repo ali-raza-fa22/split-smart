@@ -443,7 +443,7 @@ class _AllBalanceTransactionsScreenState
                 _isLoading
                     ? Center(child: CircularProgressIndicator())
                     : _error != null
-                    ? Center(child: Text('Error: $_error'))
+                    ? Center(child: Text('Someting bad happened.'))
                     : _filteredTransactions.isEmpty
                     ? Center(
                       child: Column(

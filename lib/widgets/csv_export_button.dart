@@ -148,7 +148,7 @@ class CsvExportButton extends StatelessWidget {
         builder:
             (context) => AlertDialog(
               title: const Text('Export Failed'),
-              content: Text('Error exporting expenses: $e'),
+              content: Text('Error exporting expenses.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),

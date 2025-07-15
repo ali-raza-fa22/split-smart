@@ -99,7 +99,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          ).showSnackBar(SnackBar(content: Text("Something bad happened")));
         }
       } finally {
         if (mounted) {
@@ -135,7 +135,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text("Something bad happened")));
       }
     } finally {
       if (mounted) {

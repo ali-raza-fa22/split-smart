@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/utils/avatar_utils.dart';
 
 class ProfileCard extends StatelessWidget {
   final Map<String, dynamic>? profile;
@@ -43,23 +44,11 @@ class ProfileCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: CircleAvatar(
-                radius: 35,
-                backgroundImage:
-                    profile?['avatar_url'] != null
-                        ? NetworkImage(profile!['avatar_url'])
-                        : null,
-                child:
-                    profile?['avatar_url'] == null
-                        ? Text(
-                          profile?['display_name']?[0]?.toUpperCase() ?? 'U',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        )
-                        : null,
+              child: AvatarUtils.buildUserAvatar(
+                profile?['id'],
+                profile?['display_name'],
+                theme,
+                avatarUrl: profile?['avatar_url'],
               ),
             ),
             const SizedBox(width: 16),
@@ -68,7 +57,7 @@ class ProfileCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    profile?['display_name'] ?? 'Unknown User',
+                    profile?['display_name'],
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onPrimary,
                       fontSize: 20,
@@ -77,7 +66,7 @@ class ProfileCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    profile?['username'] ?? 'No username',
+                    profile?['username'],
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,

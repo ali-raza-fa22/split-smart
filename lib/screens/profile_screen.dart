@@ -253,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error logging out: $e')),
+                          SnackBar(content: Text('Something bad happened.')),
                         );
                       }
                     }

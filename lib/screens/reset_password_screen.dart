@@ -107,7 +107,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send OTP: ${e.toString()}'),
+            content: Text('Failed to send OTP.'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

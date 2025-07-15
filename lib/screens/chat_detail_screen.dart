@@ -126,7 +126,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error sending message: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
   }
@@ -327,7 +327,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting messages: $e')));
+        ).showSnackBar(SnackBar(content: Text('Could not delete message')));
       }
     } finally {
       _clearSelection();
@@ -375,11 +375,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       : Container(
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surface,
-                          image: const DecorationImage(
-                            image: AssetImage('assets/chat_bg.jpg'),
-                            opacity: 0.1,
-                            fit: BoxFit.cover,
-                          ),
                         ),
                         child: ListView.builder(
                           controller: _scrollController,

@@ -40,7 +40,7 @@ class _AllCreatedExpensesScreenState extends State<AllCreatedExpensesScreen> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading created expenses: $e')),
+          SnackBar(content: Text('Error loading created expenses')),
         );
       }
     }

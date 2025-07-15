@@ -759,7 +759,7 @@ class ChatService {
     } catch (e) {
       return {
         'success': false,
-        'error': e.toString(),
+        'error': "Something bad happened",
         'current_user': _supabase.auth.currentUser?.id,
       };
     }
@@ -776,7 +776,7 @@ class ChatService {
 
       return 'All tables are accessible';
     } catch (e) {
-      return 'Error: $e';
+      return 'Error';
     }
   }
 
@@ -816,7 +816,7 @@ class ChatService {
       };
     } catch (e) {
       return {
-        'error': e.toString(),
+        'error': "Something bad happened",
         'current_user': _supabase.auth.currentUser?.id,
       };
     }
@@ -1520,7 +1520,7 @@ class ChatService {
     } catch (e) {
       return {
         'success': false,
-        'error': e.toString(),
+        'error': "Something bad happened",
         'current_user': _supabase.auth.currentUser?.id,
       };
     }

@@ -60,14 +60,18 @@ class BrandFilledButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: effectiveBackgroundColor,
           foregroundColor: effectiveForegroundColor,
-          disabledBackgroundColor: colorScheme.onSurface.withOpacity(0.12),
-          disabledForegroundColor: colorScheme.onSurface.withOpacity(0.38),
+          disabledBackgroundColor: colorScheme.onSurface.withValues(
+            alpha: 0.12,
+          ),
+          disabledForegroundColor: colorScheme.onSurface.withValues(
+            alpha: 0.38,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
           elevation: elevation,
           padding: padding ?? const EdgeInsets.symmetric(horizontal: 16.0),
-          shadowColor: effectiveBackgroundColor.withOpacity(0.3),
+          shadowColor: effectiveBackgroundColor.withValues(alpha: 0.3),
         ),
         child: _buildButtonContent(effectiveTextStyle),
       ),

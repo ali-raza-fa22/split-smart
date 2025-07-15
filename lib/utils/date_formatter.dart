@@ -189,7 +189,7 @@ Now: ${now.toIso8601String()}
 Offset: ${localTime.timeZoneOffset}
 ''';
     } catch (e) {
-      return 'Error: $e';
+      return 'Something bad happened';
     }
   }
 

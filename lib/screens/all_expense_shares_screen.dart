@@ -41,9 +41,9 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading expense shares: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
   }
@@ -138,7 +138,7 @@ class _AllExpenseSharesScreenState extends State<AllExpenseSharesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error marking as paid: $e')));
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
       }
     }
   }
