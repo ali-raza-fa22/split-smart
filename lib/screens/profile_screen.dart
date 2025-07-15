@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            _profile!['display_name'] ?? 'No display name',
+                            _profile?['display_name'],
                             style: Theme.of(
                               context,
                             ).textTheme.headlineSmall?.copyWith(
@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _profile!['username'] ?? 'No username',
+                            "@${_profile!['username']}",
                             style: Theme.of(
                               context,
                             ).textTheme.bodyLarge?.copyWith(
@@ -225,13 +225,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: const Text('Edit Profile'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () async {
-                      await Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const EditProfileScreen(),
                         ),
                       );
-                      _loadProfile();
+                      if (result == true) {
+                        _loadProfile();
+                      }
                     },
                   ),
                   const Divider(height: 1),

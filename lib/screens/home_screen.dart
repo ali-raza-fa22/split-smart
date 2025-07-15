@@ -482,12 +482,34 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const _ExpenseSkeletonCard(),
                               )
                               : _recentExpenses.isEmpty
-                              ? Center(
-                                child: Text(
-                                  'No expenses found.',
-                                  style: textTheme.bodyMedium,
+                              ?
+                              // Column(
+                              //   children: [
+                              Container(
+                                height: 250,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Your recent expenses would show here.',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color:
+                                                  theme
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               )
+                              //   ,  const SizedBox(height: 250),
+                              //   ],
+                              // )
                               : GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),

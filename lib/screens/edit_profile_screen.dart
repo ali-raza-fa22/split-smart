@@ -239,6 +239,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             .from('avatars')
                                             .getPublicUrl(filePath);
                                       }
+                                      // Add cache-busting query param
+                                      avatarUrl =
+                                          '$avatarUrl?t=${DateTime.now().millisecondsSinceEpoch}';
                                       await Supabase.instance.client
                                           .from('profiles')
                                           .update({
@@ -260,7 +263,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             ),
                                           ),
                                         );
-                                        Navigator.pop(context);
+                                        Navigator.pop(context, true);
                                       }
                                     } catch (e) {
                                       if (mounted) {

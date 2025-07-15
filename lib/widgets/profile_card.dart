@@ -66,7 +66,7 @@ class ProfileCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    profile?['username'],
+                    "@${profile?['username']}",
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,

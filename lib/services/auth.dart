@@ -68,6 +68,7 @@ class AuthService {
           });
         }
       }
+      print("username: ${email.split('@')[0]}");
       return response;
     } catch (e) {
       rethrow;
