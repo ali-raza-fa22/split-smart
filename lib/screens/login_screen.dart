@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/app_utils.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import '../utils/app_exceptions.dart';
+import '../widgets/error_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
@@ -86,10 +88,12 @@ class _LoginScreenState extends State<LoginScreen> {
             (route) => false,
           );
         }
-      } catch (e) {
-        if (mounted) {
-          String errorMessage = e.toString();
-          if (errorMessage.contains('Email not confirmed')) {
+      } on AppAuthException catch (e) {
+        // If email not confirmed, redirect to verification screen
+        if (e.code == 'EMAIL_NOT_CONFIRMED' ||
+            e.message.toLowerCase().contains('verify') ||
+            e.message.toLowerCase().contains('email')) {
+          if (mounted) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -97,15 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     (context) => VerifyEmailScreen(email: _lastAttemptedEmail!),
               ),
             );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Something bad happened."),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
           }
+        } else {
+          if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
         }
+      } on Exception catch (e) {
+        // Fallback - show friendly message
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);

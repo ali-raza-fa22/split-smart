@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/date_formatter.dart';
 
 class CsvExportService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final supabase = Supabase.instance.client;
 
   // Get the documents directory path
   Future<String> _getDocumentsPath() async {
@@ -69,10 +69,10 @@ class CsvExportService {
     try {
       // Get group information
       final groupResponse =
-          await _supabase.from('groups').select('*').eq('id', groupId).single();
+          await supabase.from('groups').select('*').eq('id', groupId).single();
 
       // Get expenses with expense shares
-      final expensesResponse = await _supabase
+      final expensesResponse = await supabase
           .from('expenses')
           .select('''
             *,
@@ -82,7 +82,7 @@ class CsvExportService {
           .order('created_at', ascending: false);
 
       // Get group members
-      final membersResponse = await _supabase
+      final membersResponse = await supabase
           .from('group_members')
           .select('*')
           .eq('group_id', groupId);
@@ -113,7 +113,7 @@ class CsvExportService {
       allUserIds.add(groupResponse['created_by']);
 
       // Fetch profiles with email
-      final profilesResponse = await _supabase
+      final profilesResponse = await supabase
           .from('profiles')
           .select('id, display_name, username, email')
           .inFilter('id', allUserIds.toList());

@@ -3,16 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'balance_service.dart';
 
 class ChatService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final supabase = Supabase.instance.client;
   final BalanceService _balanceService = BalanceService();
 
   // Get all users except current user
   Future<List<Map<String, dynamic>>> getUsers() async {
     try {
-      final response = await _supabase
+      final response = await supabase
           .from('profiles')
           .select()
-          .neq('id', _supabase.auth.currentUser!.id);
+          .neq('id', supabase.auth.currentUser!.id);
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       rethrow;
@@ -22,9 +22,9 @@ class ChatService {
   // Get all users with their last message
   Future<List<Map<String, dynamic>>> getUsersWithLastMessage() async {
     try {
-      final response = await _supabase.rpc(
+      final response = await supabase.rpc(
         'get_user_chats_with_last_message',
-        params: {'current_user_id': _supabase.auth.currentUser!.id},
+        params: {'current_user_id': supabase.auth.currentUser!.id},
       );
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -46,11 +46,11 @@ class ChatService {
 
       // Create the group
       final groupResponse =
-          await _supabase
+          await supabase
               .from('groups')
               .insert({
                 'name': name,
-                'created_by': _supabase.auth.currentUser!.id,
+                'created_by': supabase.auth.currentUser!.id,
                 'created_at': DateTime.now().toUtc().toIso8601String(),
               })
               .select('id')
@@ -62,7 +62,7 @@ class ChatService {
       final members = [
         {
           'group_id': groupId,
-          'user_id': _supabase.auth.currentUser!.id,
+          'user_id': supabase.auth.currentUser!.id,
           'is_admin': true,
         }, // Add creator
         ...memberIds.map(
@@ -70,7 +70,7 @@ class ChatService {
         ),
       ];
 
-      await _supabase.from('group_members').insert(members);
+      await supabase.from('group_members').insert(members);
 
       return groupId;
     } catch (e) {
@@ -81,10 +81,10 @@ class ChatService {
   // Get user's groups
   Future<List<Map<String, dynamic>>> getUserGroups() async {
     try {
-      final response = await _supabase
+      final response = await supabase
           .from('groups')
           .select('*, group_members!inner(*)')
-          .eq('group_members.user_id', _supabase.auth.currentUser!.id)
+          .eq('group_members.user_id', supabase.auth.currentUser!.id)
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -96,7 +96,7 @@ class ChatService {
   Future<List<Map<String, dynamic>>> getGroupMembers(String groupId) async {
     try {
       // First get group members
-      final membersResponse = await _supabase
+      final membersResponse = await supabase
           .from('group_members')
           .select('*')
           .eq('group_id', groupId);
@@ -110,7 +110,7 @@ class ChatService {
           membersResponse.map((member) => member['user_id']).toList();
 
       // Get profiles for these users
-      final profilesResponse = await _supabase
+      final profilesResponse = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds);
@@ -137,10 +137,10 @@ class ChatService {
   // Get group chat history
   Future<List<Map<String, dynamic>>> getGroupChatHistory(String groupId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // First get group messages
-      final messagesResponse = await _supabase
+      final messagesResponse = await supabase
           .from('group_messages')
           .select('*')
           .eq('group_id', groupId)
@@ -175,7 +175,7 @@ class ChatService {
               .toList();
 
       // Get profiles for all senders
-      final profilesResponse = await _supabase
+      final profilesResponse = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', senderIds);
@@ -210,9 +210,9 @@ class ChatService {
     try {
       final timestamp = DateTime.now().toUtc().toIso8601String();
 
-      await _supabase.from('group_messages').insert({
+      await supabase.from('group_messages').insert({
         'group_id': groupId,
-        'sender_id': _supabase.auth.currentUser!.id,
+        'sender_id': supabase.auth.currentUser!.id,
         'content': content,
         'category': category,
         'created_at': timestamp,
@@ -230,8 +230,8 @@ class ChatService {
   // Get direct chat history between two users
   Future<List<Map<String, dynamic>>> getChatHistory(String otherUserId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
-      final response = await _supabase
+      final currentUserId = supabase.auth.currentUser!.id;
+      final response = await supabase
           .from('messages')
           .select()
           .or('sender_id.eq.$currentUserId,receiver_id.eq.$currentUserId')
@@ -268,8 +268,8 @@ class ChatService {
     required String content,
   }) async {
     try {
-      await _supabase.from('messages').insert({
-        'sender_id': _supabase.auth.currentUser!.id,
+      await supabase.from('messages').insert({
+        'sender_id': supabase.auth.currentUser!.id,
         'receiver_id': receiverId,
         'content': content,
         'created_at': DateTime.now().toUtc().toIso8601String(),
@@ -282,11 +282,11 @@ class ChatService {
   // Mark messages as read (backward compatibility)
   Future<void> markMessagesAsRead(String senderId) async {
     try {
-      await _supabase
+      await supabase
           .from('messages')
           .update({'is_read': true})
           .eq('sender_id', senderId)
-          .eq('receiver_id', _supabase.auth.currentUser!.id)
+          .eq('receiver_id', supabase.auth.currentUser!.id)
           .eq('is_read', false);
     } catch (e) {
       rethrow;
@@ -296,11 +296,11 @@ class ChatService {
   // Mark messages as read and return updated unread count
   Future<int> markMessagesAsReadAndGetCount(String senderId) async {
     try {
-      final result = await _supabase
+      await supabase
           .from('messages')
           .update({'is_read': true})
           .eq('sender_id', senderId)
-          .eq('receiver_id', _supabase.auth.currentUser!.id)
+          .eq('receiver_id', supabase.auth.currentUser!.id)
           .eq('is_read', false);
 
       // Return the updated unread count immediately
@@ -314,10 +314,10 @@ class ChatService {
   // Mark group messages as read and return updated unread count
   Future<int> markGroupMessagesAsReadAndGetCount(String groupId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get all messages in the group not sent by current user
-      final allMessages = await _supabase
+      final allMessages = await supabase
           .from('group_messages')
           .select('id')
           .eq('group_id', groupId)
@@ -327,7 +327,7 @@ class ChatService {
         final messageIds = allMessages.map((m) => m['id'] as String).toList();
 
         // Get existing read receipts for these messages
-        final existingReads = await _supabase
+        final existingReads = await supabase
             .from('group_message_reads')
             .select('message_id')
             .eq('user_id', currentUserId)
@@ -355,7 +355,7 @@ class ChatService {
                   )
                   .toList();
 
-          await _supabase.from('group_message_reads').insert(inserts);
+          await supabase.from('group_message_reads').insert(inserts);
         }
       }
 
@@ -371,10 +371,10 @@ class ChatService {
   // Mark group messages as read (backward compatibility)
   Future<void> markGroupMessagesAsRead(String groupId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get all messages in the group not sent by current user
-      final allMessages = await _supabase
+      final allMessages = await supabase
           .from('group_messages')
           .select('id')
           .eq('group_id', groupId)
@@ -384,7 +384,7 @@ class ChatService {
         final messageIds = allMessages.map((m) => m['id'] as String).toList();
 
         // Get existing read receipts for these messages
-        final existingReads = await _supabase
+        final existingReads = await supabase
             .from('group_message_reads')
             .select('message_id')
             .eq('user_id', currentUserId)
@@ -412,7 +412,7 @@ class ChatService {
                   )
                   .toList();
 
-          await _supabase.from('group_message_reads').insert(inserts);
+          await supabase.from('group_message_reads').insert(inserts);
         }
       }
     } catch (e) {
@@ -422,8 +422,8 @@ class ChatService {
 
   // Real-time stream for message read status changes
   Stream<void> getMessageReadStatusStream() {
-    final userId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final userId = supabase.auth.currentUser!.id;
+    return supabase
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('receiver_id', userId)
@@ -452,8 +452,8 @@ class ChatService {
 
   // Real-time stream for group message read status changes
   Stream<void> getGroupMessageReadStatusStream() {
-    final userId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final userId = supabase.auth.currentUser!.id;
+    return supabase
         .from('group_message_reads')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
@@ -470,10 +470,10 @@ class ChatService {
   // Get unread message count
   Future<int> getUnreadMessageCount() async {
     try {
-      final response = await _supabase
+      final response = await supabase
           .from('messages')
           .select('id')
-          .eq('receiver_id', _supabase.auth.currentUser!.id)
+          .eq('receiver_id', supabase.auth.currentUser!.id)
           .eq('is_read', false);
 
       // Filter out deleted messages
@@ -491,8 +491,8 @@ class ChatService {
 
   // Subscribe to group messages with real-time updates
   Stream<List<Map<String, dynamic>>> subscribeToGroupMessages(String groupId) {
-    final currentUserId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final currentUserId = supabase.auth.currentUser!.id;
+    return supabase
         .from('group_messages')
         .stream(primaryKey: ['id'])
         .eq('group_id', groupId)
@@ -521,8 +521,8 @@ class ChatService {
 
   // Subscribe to direct messages
   Stream<List<Map<String, dynamic>>> subscribeToMessages(String otherUserId) {
-    final userId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final userId = supabase.auth.currentUser!.id;
+    return supabase
         .from('messages')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: true)
@@ -554,11 +554,11 @@ class ChatService {
   Future<bool> isGroupAdmin(String groupId) async {
     try {
       final response =
-          await _supabase
+          await supabase
               .from('group_members')
               .select('is_admin')
               .eq('group_id', groupId)
-              .eq('user_id', _supabase.auth.currentUser!.id)
+              .eq('user_id', supabase.auth.currentUser!.id)
               .single();
       return response['is_admin'] ?? false;
     } catch (e) {
@@ -592,7 +592,7 @@ class ChatService {
         throw Exception('User is already a member of this group');
       }
 
-      await _supabase.from('group_members').insert({
+      await supabase.from('group_members').insert({
         'group_id': groupId,
         'user_id': userId,
         'is_admin': false,
@@ -615,11 +615,11 @@ class ChatService {
       }
 
       // Prevent admin from removing themselves
-      if (userId == _supabase.auth.currentUser!.id) {
+      if (userId == supabase.auth.currentUser!.id) {
         throw Exception('Admin cannot remove themselves from the group');
       }
 
-      await _supabase
+      await supabase
           .from('group_members')
           .delete()
           .eq('group_id', groupId)
@@ -645,7 +645,7 @@ class ChatService {
         throw Exception('Group name cannot be empty');
       }
 
-      await _supabase
+      await supabase
           .from('groups')
           .update({'name': newName.trim()})
           .eq('id', groupId);
@@ -665,30 +665,30 @@ class ChatService {
 
       // Delete in the correct order to respect foreign key constraints
       // 1. Get expense IDs first, then delete expense shares
-      final expenseIds = await _supabase
+      final expenseIds = await supabase
           .from('expenses')
           .select('id')
           .eq('group_id', groupId);
 
       if (expenseIds.isNotEmpty) {
         final expenseIdList = expenseIds.map((e) => e['id']).toList();
-        await _supabase
+        await supabase
             .from('expense_shares')
             .delete()
             .inFilter('expense_id', expenseIdList);
       }
 
       // 2. Delete expenses
-      await _supabase.from('expenses').delete().eq('group_id', groupId);
+      await supabase.from('expenses').delete().eq('group_id', groupId);
 
       // 3. Delete group messages
-      await _supabase.from('group_messages').delete().eq('group_id', groupId);
+      await supabase.from('group_messages').delete().eq('group_id', groupId);
 
       // 4. Delete group members
-      await _supabase.from('group_members').delete().eq('group_id', groupId);
+      await supabase.from('group_members').delete().eq('group_id', groupId);
 
       // 5. Finally delete the group itself
-      await _supabase.from('groups').delete().eq('id', groupId);
+      await supabase.from('groups').delete().eq('id', groupId);
     } catch (e) {
       rethrow;
     }
@@ -699,11 +699,11 @@ class ChatService {
     try {
       // Check if user is a member of the group
       final response =
-          await _supabase
+          await supabase
               .from('group_members')
               .select('id')
               .eq('group_id', groupId)
-              .eq('user_id', _supabase.auth.currentUser!.id)
+              .eq('user_id', supabase.auth.currentUser!.id)
               .single();
       return response.isNotEmpty;
     } catch (e) {
@@ -754,13 +754,13 @@ class ChatService {
         'message_sent': true,
         'messages_count': messages.length,
         'members_count': members.length,
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     } catch (e) {
       return {
         'success': false,
         'error': "Something bad happened",
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     }
   }
@@ -769,10 +769,10 @@ class ChatService {
   Future<String> testTableAccess() async {
     try {
       // Test each table individually
-      await _supabase.from('profiles').select('count').limit(1);
-      await _supabase.from('groups').select('count').limit(1);
-      await _supabase.from('group_members').select('count').limit(1);
-      await _supabase.from('group_messages').select('count').limit(1);
+      await supabase.from('profiles').select('count').limit(1);
+      await supabase.from('groups').select('count').limit(1);
+      await supabase.from('group_members').select('count').limit(1);
+      await supabase.from('group_messages').select('count').limit(1);
 
       return 'All tables are accessible';
     } catch (e) {
@@ -784,25 +784,22 @@ class ChatService {
   Future<Map<String, dynamic>> debugDatabaseConnection() async {
     try {
       // Test profiles table
-      final profilesTest = await _supabase
+      final profilesTest = await supabase
           .from('profiles')
           .select('count')
           .limit(1);
 
       // Test groups table
-      final groupsTest = await _supabase
-          .from('groups')
-          .select('count')
-          .limit(1);
+      final groupsTest = await supabase.from('groups').select('count').limit(1);
 
       // Test group_members table
-      final groupMembersTest = await _supabase
+      final groupMembersTest = await supabase
           .from('group_members')
           .select('count')
           .limit(1);
 
       // Test group_messages table
-      final groupMessagesTest = await _supabase
+      final groupMessagesTest = await supabase
           .from('group_messages')
           .select('count')
           .limit(1);
@@ -812,19 +809,19 @@ class ChatService {
         'groups': groupsTest.isNotEmpty,
         'group_members': groupMembersTest.isNotEmpty,
         'group_messages': groupMessagesTest.isNotEmpty,
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     } catch (e) {
       return {
         'error': "Something bad happened",
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     }
   }
 
   // Test real-time subscription
   Stream<List<Map<String, dynamic>>> testGroupMessagesStream(String groupId) {
-    return _supabase
+    return supabase
         .from('group_messages')
         .stream(primaryKey: ['id'])
         .eq('group_id', groupId)
@@ -839,12 +836,12 @@ class ChatService {
     try {
       final groups = await getUserGroups();
       final groupsWithDetails = <Map<String, dynamic>>[];
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       for (final group in groups) {
         try {
           // Get last message
-          final messagesResponse = await _supabase
+          final messagesResponse = await supabase
               .from('group_messages')
               .select('*')
               .eq('group_id', group['id'])
@@ -877,7 +874,7 @@ class ChatService {
 
             // Fetch sender's profile
             final senderProfile =
-                await _supabase
+                await supabase
                     .from('profiles')
                     .select('display_name')
                     .eq('id', lastMessage['sender_id'])
@@ -930,8 +927,7 @@ class ChatService {
 
   // Real-time stream for group messages that will trigger group list updates
   Stream<void> getGroupMessagesStream() {
-    final userId = _supabase.auth.currentUser!.id;
-    return _supabase
+    return supabase
         .from('group_messages')
         .stream(primaryKey: ['id'])
         .map((event) {
@@ -961,8 +957,8 @@ class ChatService {
   Stream<List<Map<String, dynamic>>> getGroupMessagesStreamForGroup(
     String groupId,
   ) {
-    final currentUserId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final currentUserId = supabase.auth.currentUser!.id;
+    return supabase
         .from('group_messages')
         .stream(primaryKey: ['id'])
         .eq('group_id', groupId)
@@ -999,7 +995,7 @@ class ChatService {
   }) async {
     try {
       final response =
-          await _supabase
+          await supabase
               .from('expenses')
               .insert({
                 'group_id': groupId,
@@ -1007,7 +1003,7 @@ class ChatService {
                 'description': description,
                 'total_amount': totalAmount,
                 'paid_by': paidBy,
-                'created_by': _supabase.auth.currentUser!.id,
+                'created_by': supabase.auth.currentUser!.id,
                 'created_at': DateTime.now().toUtc().toIso8601String(),
               })
               .select('id')
@@ -1020,7 +1016,7 @@ class ChatService {
 
       // Get the expense data with profile information using manual join
       final expenseData =
-          await _supabase
+          await supabase
               .from('expenses')
               .select('*')
               .eq('id', expenseId)
@@ -1028,11 +1024,7 @@ class ChatService {
 
       // Get the profile of the person who paid
       final paidByProfile =
-          await _supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', paidBy)
-              .single();
+          await supabase.from('profiles').select('*').eq('id', paidBy).single();
 
       // Combine the data
       final combinedExpenseData = {...expenseData, 'profiles': paidByProfile};
@@ -1055,7 +1047,7 @@ class ChatService {
   // Get all expenses for a group
   Future<List<Map<String, dynamic>>> getGroupExpenses(String groupId) async {
     try {
-      final expenses = await _supabase
+      final expenses = await supabase
           .from('expenses')
           .select('*')
           .eq('group_id', groupId)
@@ -1069,7 +1061,7 @@ class ChatService {
       }
 
       // Get profiles for all users
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds.toList());
@@ -1096,10 +1088,10 @@ class ChatService {
   // Get user's expense shares (what they owe)
   Future<List<Map<String, dynamic>>> getUserExpenseShares() async {
     try {
-      final expenseShares = await _supabase
+      final expenseShares = await supabase
           .from('expense_shares')
           .select('*')
-          .eq('user_id', _supabase.auth.currentUser!.id)
+          .eq('user_id', supabase.auth.currentUser!.id)
           .order('created_at', ascending: false);
 
       if (expenseShares.isEmpty) {
@@ -1111,7 +1103,7 @@ class ChatService {
           expenseShares.map((share) => share['expense_id']).toList();
 
       // Get expenses with group info
-      final expenses = await _supabase
+      final expenses = await supabase
           .from('expenses')
           .select('*')
           .inFilter('id', expenseIds);
@@ -1128,13 +1120,13 @@ class ChatService {
           expenses.map((expense) => expense['group_id']).toSet().toList();
 
       // Get profiles for all users
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds.toList());
 
       // Get groups
-      final groups = await _supabase
+      final groups = await supabase
           .from('groups')
           .select('*')
           .inFilter('id', groupIds);
@@ -1183,10 +1175,10 @@ class ChatService {
   // Get all expenses created by the current user
   Future<List<Map<String, dynamic>>> getUserCreatedExpenses() async {
     try {
-      final expenses = await _supabase
+      final expenses = await supabase
           .from('expenses')
           .select('*')
-          .eq('created_by', _supabase.auth.currentUser!.id)
+          .eq('created_by', supabase.auth.currentUser!.id)
           .order('created_at', ascending: false);
 
       if (expenses.isEmpty) {
@@ -1205,13 +1197,13 @@ class ChatService {
           expenses.map((expense) => expense['group_id']).toSet().toList();
 
       // Get profiles for all users
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds.toList());
 
       // Get groups
-      final groups = await _supabase
+      final groups = await supabase
           .from('groups')
           .select('*')
           .inFilter('id', groupIds);
@@ -1253,11 +1245,11 @@ class ChatService {
     try {
       // First, get the expense share details to find the group and expense info
       final expenseShare =
-          await _supabase
+          await supabase
               .from('expense_shares')
               .select('*, expenses(*)')
               .eq('id', expenseShareId)
-              .eq('user_id', _supabase.auth.currentUser!.id)
+              .eq('user_id', supabase.auth.currentUser!.id)
               .single();
 
       final amountOwed = (expenseShare['amount_owed'] as num).toDouble();
@@ -1274,21 +1266,21 @@ class ChatService {
       );
 
       // Update the expense share as paid
-      await _supabase
+      await supabase
           .from('expense_shares')
           .update({
             'is_paid': true,
             'paid_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', expenseShareId)
-          .eq('user_id', _supabase.auth.currentUser!.id);
+          .eq('user_id', supabase.auth.currentUser!.id);
 
       // Get the current user's profile
       final currentUserProfile =
-          await _supabase
+          await supabase
               .from('profiles')
               .select('*')
-              .eq('id', _supabase.auth.currentUser!.id)
+              .eq('id', supabase.auth.currentUser!.id)
               .single();
 
       // Create payment data for the message with balance information
@@ -1296,7 +1288,7 @@ class ChatService {
         'expense_id': expenseShare['expense_id'],
         'expense_title': expenseTitle,
         'amount_paid': amountOwed,
-        'paid_by': _supabase.auth.currentUser!.id,
+        'paid_by': supabase.auth.currentUser!.id,
         'paid_by_name': currentUserProfile['display_name'],
         'expense_share_id': expenseShareId,
         'paid_at': DateTime.now().toUtc().toIso8601String(),
@@ -1378,7 +1370,7 @@ class ChatService {
     String category,
   ) async {
     try {
-      final messages = await _supabase
+      final messages = await supabase
           .from('group_messages')
           .select('*')
           .eq('group_id', groupId)
@@ -1408,7 +1400,7 @@ class ChatService {
               .toList();
 
       // Get profiles for all senders
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', senderIds);
@@ -1437,7 +1429,7 @@ class ChatService {
     String expenseId,
   ) async {
     try {
-      final expenseShares = await _supabase
+      final expenseShares = await supabase
           .from('expense_shares')
           .select('*')
           .eq('expense_id', expenseId)
@@ -1451,7 +1443,7 @@ class ChatService {
       final userIds = expenseShares.map((share) => share['user_id']).toList();
 
       // Get profiles for all users
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds);
@@ -1479,31 +1471,28 @@ class ChatService {
   Future<Map<String, dynamic>> debugExpenseCreation(String groupId) async {
     try {
       // Test if we can access the expenses table
-      final tableTest = await _supabase
+      final tableTest = await supabase
           .from('expenses')
           .select('count')
           .limit(1);
 
       // Test if we can access the expense_shares table
-      final sharesTest = await _supabase
+      final sharesTest = await supabase
           .from('expense_shares')
           .select('count')
           .limit(1);
 
       // Test if we can access the profiles table
-      final profilesTest = await _supabase
+      final profilesTest = await supabase
           .from('profiles')
           .select('count')
           .limit(1);
 
       // Test if we can access the groups table
-      final groupsTest = await _supabase
-          .from('groups')
-          .select('count')
-          .limit(1);
+      final groupsTest = await supabase.from('groups').select('count').limit(1);
 
       // Test if we can access the group_members table
-      final membersTest = await _supabase
+      final membersTest = await supabase
           .from('group_members')
           .select('count')
           .limit(1);
@@ -1515,13 +1504,13 @@ class ChatService {
         'profiles_table': profilesTest.isNotEmpty,
         'groups_table': groupsTest.isNotEmpty,
         'group_members_table': membersTest.isNotEmpty,
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     } catch (e) {
       return {
         'success': false,
         'error': "Something bad happened",
-        'current_user': _supabase.auth.currentUser?.id,
+        'current_user': supabase.auth.currentUser?.id,
       };
     }
   }
@@ -1530,10 +1519,10 @@ class ChatService {
   Future<List<Map<String, dynamic>>> getAllUserExpenses() async {
     try {
       // First get all groups the user is a member of
-      final userGroups = await _supabase
+      final userGroups = await supabase
           .from('group_members')
           .select('group_id')
-          .eq('user_id', _supabase.auth.currentUser!.id);
+          .eq('user_id', supabase.auth.currentUser!.id);
 
       if (userGroups.isEmpty) {
         return [];
@@ -1542,7 +1531,7 @@ class ChatService {
       final groupIds = userGroups.map((group) => group['group_id']).toList();
 
       // Get all expenses from these groups
-      final expenses = await _supabase
+      final expenses = await supabase
           .from('expenses')
           .select('*')
           .inFilter('group_id', groupIds)
@@ -1564,13 +1553,13 @@ class ChatService {
           expenses.map((expense) => expense['group_id']).toSet().toList();
 
       // Get profiles for all users
-      final profiles = await _supabase
+      final profiles = await supabase
           .from('profiles')
           .select('*')
           .inFilter('id', userIds.toList());
 
       // Get groups
-      final groups = await _supabase
+      final groups = await supabase
           .from('groups')
           .select('*')
           .inFilter('id', expenseGroupIds);
@@ -1693,7 +1682,7 @@ class ChatService {
   Future<Map<String, dynamic>?> getGroupInfo(String groupId) async {
     try {
       final response =
-          await _supabase.from('groups').select('*').eq('id', groupId).single();
+          await supabase.from('groups').select('*').eq('id', groupId).single();
       return response;
     } catch (e) {
       return null;
@@ -1720,11 +1709,11 @@ class ChatService {
   // Delete message for current user only (soft delete)
   Future<void> deleteMessageForMe(String messageId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get current deleted_for_users array
       final message =
-          await _supabase
+          await supabase
               .from('messages')
               .select('deleted_for_users')
               .eq('id', messageId)
@@ -1738,7 +1727,7 @@ class ChatService {
       }
 
       // Update with new array
-      await _supabase
+      await supabase
           .from('messages')
           .update({'deleted_for_users': deletedForUsers})
           .eq('id', messageId);
@@ -1750,7 +1739,7 @@ class ChatService {
   // Delete message for everyone (soft delete)
   Future<void> deleteMessageForEveryone(String messageId) async {
     try {
-      await _supabase
+      await supabase
           .from('messages')
           .update({'is_deleted': true, 'content': 'This message was deleted'})
           .eq('id', messageId);
@@ -1762,11 +1751,11 @@ class ChatService {
   // Delete group message for current user only (soft delete)
   Future<void> deleteGroupMessageForMe(String messageId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get current deleted_for_users array
       final message =
-          await _supabase
+          await supabase
               .from('group_messages')
               .select('deleted_for_users')
               .eq('id', messageId)
@@ -1780,7 +1769,7 @@ class ChatService {
       }
 
       // Update with new array
-      await _supabase
+      await supabase
           .from('group_messages')
           .update({'deleted_for_users': deletedForUsers})
           .eq('id', messageId);
@@ -1792,7 +1781,7 @@ class ChatService {
   // Delete group message for everyone (soft delete)
   Future<void> deleteGroupMessageForEveryone(String messageId) async {
     try {
-      await _supabase
+      await supabase
           .from('group_messages')
           .update({'is_deleted': true, 'content': 'This message was deleted'})
           .eq('id', messageId);
@@ -1814,8 +1803,8 @@ class ChatService {
 
   // Real-time stream for direct messages that will trigger chat list updates
   Stream<void> getDirectMessagesStream() {
-    final userId = _supabase.auth.currentUser!.id;
-    return _supabase
+    final userId = supabase.auth.currentUser!.id;
+    return supabase
         .from('messages')
         .stream(primaryKey: ['id'])
         .map((event) {
@@ -1844,8 +1833,8 @@ class ChatService {
   // Get unread message count for a direct chat with another user
   Future<int> getUnreadDirectMessageCount(String otherUserId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
-      final response = await _supabase
+      final currentUserId = supabase.auth.currentUser!.id;
+      final response = await supabase
           .from('messages')
           .select('id, is_deleted, deleted_for_users')
           .eq('receiver_id', currentUserId)
@@ -1877,9 +1866,9 @@ class ChatService {
   // Get unread message count for a group
   Future<int> getUnreadGroupMessageCount(String groupId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
       // Get all group messages for this group
-      final messages = await _supabase
+      final messages = await supabase
           .from('group_messages')
           .select('id, is_deleted, deleted_for_users, sender_id')
           .eq('group_id', groupId)
@@ -1914,7 +1903,7 @@ class ChatService {
           relevantMessages.map((m) => m['id'] as String).toList();
 
       // Get all read receipts for this user in this group
-      final reads = await _supabase
+      final reads = await supabase
           .from('group_message_reads')
           .select('message_id')
           .eq('user_id', currentUserId)
@@ -1946,11 +1935,11 @@ class ChatService {
   // Get the timestamp when user last read messages in a direct chat
   Future<DateTime?> getLastReadTimestamp(String otherUserId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get the most recent message that was read by the current user
       final response =
-          await _supabase
+          await supabase
               .from('messages')
               .select('created_at')
               .eq('sender_id', otherUserId)
@@ -1972,11 +1961,11 @@ class ChatService {
   // Get the timestamp when user last read messages in a group chat
   Future<DateTime?> getLastReadGroupTimestamp(String groupId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser!.id;
+      final currentUserId = supabase.auth.currentUser!.id;
 
       // Get the most recent group message read receipt for this group
       final response =
-          await _supabase
+          await supabase
               .from('group_message_reads')
               .select('read_at')
               .eq('user_id', currentUserId)
@@ -1984,10 +1973,10 @@ class ChatService {
               .limit(1)
               .single();
 
-      if (response != null) {
-        return DateTime.parse(response['read_at']);
-      }
-      return null;
+      // if (response != null) {
+      return DateTime.parse(response['read_at']);
+      // }
+      // return null;
     } catch (e) {
       return null;
     }

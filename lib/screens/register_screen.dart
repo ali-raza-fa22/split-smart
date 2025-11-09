@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import '../utils/app_exceptions.dart';
+import '../widgets/error_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
@@ -119,12 +121,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Something bad happened")));
-        }
+      } on AppAuthException catch (e) {
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
+      } on Exception catch (e) {
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);

@@ -5,6 +5,8 @@ import '../utils/constants.dart';
 import '../utils/date_formatter.dart';
 
 class TransactionExportService {
+  final timestamp = DateFormatter.getCurrentTimestamp();
+
   // Get the documents directory path for transactions
   Future<String> _getDocumentsPath() async {
     if (Platform.isAndroid) {
@@ -40,9 +42,7 @@ class TransactionExportService {
   ) async {
     try {
       final documentsPath = await _getDocumentsPath();
-      final now = DateTime.now();
-      final timestamp =
-          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+
       final fileName =
           'transaction-${transaction['id'] ?? timestamp}-$timestamp.csv';
       final filePath = '$documentsPath/$fileName';
@@ -67,9 +67,6 @@ class TransactionExportService {
       }
 
       final documentsPath = await _getDocumentsPath();
-      final now = DateTime.now();
-      final timestamp =
-          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
       final fileName = 'transactions-batch-$timestamp.csv';
       final filePath = '$documentsPath/$fileName';
 
@@ -89,9 +86,7 @@ class TransactionExportService {
 
     // Header
     buffer.writeln('SPLIT SMART - TRANSACTION EXPORT');
-    buffer.writeln(
-      'Exported: ${DateFormatter.formatFullDateTime(DateTime.now())}',
-    );
+    buffer.writeln('Exported: ${timestamp}');
     buffer.writeln();
 
     // Transaction details
@@ -132,6 +127,7 @@ class TransactionExportService {
     buffer.writeln();
     buffer.writeln('=' * 20);
     buffer.writeln('END OF TRANSACTION EXPORT');
+    buffer.writeln('Exported on ${timestamp}');
     buffer.writeln('=' * 20);
 
     return buffer.toString();
@@ -145,9 +141,7 @@ class TransactionExportService {
 
     // Header
     buffer.writeln('SPLIT SMART - TRANSACTIONS BATCH EXPORT');
-    buffer.writeln(
-      'Exported: ${DateFormatter.formatFullDateTime(DateTime.now())}',
-    );
+    buffer.writeln('Exported: ${timestamp}');
     buffer.writeln('Total Transactions: ${transactions.length}');
     buffer.writeln();
 
@@ -206,6 +200,7 @@ class TransactionExportService {
     buffer.writeln();
     buffer.writeln('=' * 20);
     buffer.writeln('END OF TRANSACTIONS EXPORT');
+    buffer.writeln('Exported on ${timestamp}');
     buffer.writeln('=' * 20);
 
     return buffer.toString();
