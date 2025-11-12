@@ -2,14 +2,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../screens/verify_email_screen.dart';
 
+import '../utils/app_exceptions.dart';
+import 'error_handler_service.dart';
+import 'logger_service.dart';
+
 class AuthService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final supabase = Supabase.instance.client;
+  final ErrorHandlerService _errorHandler = ErrorHandlerService();
+  final LoggerService _logger = LoggerService();
 
   // Get current user
-  User? get currentUser => _supabase.auth.currentUser;
+  User? get currentUser => supabase.auth.currentUser;
 
   // Get current session
-  Session? get currentSession => _supabase.auth.currentSession;
+  Session? get currentSession => supabase.auth.currentSession;
 
   // Register with email and password
   Future<AuthResponse> register({
@@ -17,24 +23,28 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final response = await _supabase.auth.signUp(
+      final response = await supabase.auth.signUp(
         email: email,
         password: password,
         emailRedirectTo: null,
       );
       // Do NOT create profile here. Only after email is verified.
       return response;
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('register failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.register');
     }
   }
 
   // Send OTP for email verification
   Future<void> sendOTP(String email) async {
     try {
-      await _supabase.auth.resend(type: OtpType.signup, email: email);
-    } catch (e) {
-      rethrow;
+      await supabase.auth.resend(type: OtpType.signup, email: email);
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('sendOTP failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.sendOTP');
     }
   }
 
@@ -44,7 +54,7 @@ class AuthService {
     required String token,
   }) async {
     try {
-      final response = await _supabase.auth.verifyOTP(
+      final response = await supabase.auth.verifyOTP(
         email: email,
         token: token,
         type: OtpType.signup,
@@ -53,13 +63,13 @@ class AuthService {
       if (response.user != null) {
         final userId = response.user!.id;
         final existing =
-            await _supabase
+            await supabase
                 .from('profiles')
                 .select('id')
                 .eq('id', userId)
                 .maybeSingle();
         if (existing == null) {
-          await _supabase.from('profiles').insert({
+          await supabase.from('profiles').insert({
             'id': userId,
             'username': email.split('@')[0],
             'display_name': email.split('@')[0],
@@ -70,8 +80,10 @@ class AuthService {
       }
       print("username: ${email.split('@')[0]}");
       return response;
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('verifyOTP failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.verifyOTP');
     }
   }
 
@@ -81,22 +93,27 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final response = await _supabase.auth.signInWithPassword(
+      final response = await supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
+      print(response);
       return response;
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('login failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.login');
     }
   }
 
   // Logout
   Future<void> logout() async {
     try {
-      await _supabase.auth.signOut();
-    } catch (e) {
-      rethrow;
+      await supabase.auth.signOut();
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('logout failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.logout');
     }
   }
 
@@ -112,11 +129,17 @@ class AuthService {
       if (currentUser == null) return false;
 
       // Refresh the session to get the latest email confirmation status
-      await _supabase.auth.refreshSession();
+      await supabase.auth.refreshSession();
 
       // Check if email is confirmed after refresh
-      return _supabase.auth.currentUser?.emailConfirmedAt != null;
-    } catch (e) {
+      return supabase.auth.currentUser?.emailConfirmedAt != null;
+    } catch (e, st) {
+      _logger.error(
+        'isCurrentUserEmailVerified failed',
+        error: e,
+        stackTrace: st,
+      );
+      // don't rethrow - this is a safe check used in UI flows; return false
       return false;
     }
   }
@@ -127,13 +150,15 @@ class AuthService {
       if (currentUser == null) return null;
 
       final response =
-          await _supabase
+          await supabase
               .from('profiles')
               .select()
               .eq('id', currentUser!.id.toString())
               .single();
       return response;
-    } catch (e) {
+    } catch (e, st) {
+      _logger.error('getUserProfile failed', error: e, stackTrace: st);
+      // Keep prior behaviour of returning null on error but log it
       return null;
     }
   }
@@ -154,43 +179,50 @@ class AuthService {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
-      await _supabase.from('profiles').upsert({
+      await supabase.from('profiles').upsert({
         'id': currentUser!.id.toString(),
         ...updates,
       }).select();
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('updateProfile failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.updateProfile');
     }
   }
 
   // Update user email
   Future<void> updateEmail(String newEmail) async {
     try {
-      await _supabase.auth.updateUser(UserAttributes(email: newEmail));
-    } catch (e) {
-      rethrow;
+      await supabase.auth.updateUser(UserAttributes(email: newEmail));
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('updateEmail failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.updateEmail');
     }
   }
 
   // Update user password
   Future<void> updatePassword(String newPassword) async {
     try {
-      await _supabase.auth.updateUser(UserAttributes(password: newPassword));
-    } catch (e) {
-      rethrow;
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('updatePassword failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(e, context: 'AuthService.updatePassword');
     }
   }
 
   // Get email confirmation status
   Future<bool> checkEmailConfirmation() async {
     try {
-      final user = _supabase.auth.currentUser;
+      final user = supabase.auth.currentUser;
       if (user == null) return false;
 
       // Refresh the user data
-      await _supabase.auth.refreshSession();
-      return _supabase.auth.currentUser?.emailConfirmedAt != null;
-    } catch (e) {
+      await supabase.auth.refreshSession();
+      return supabase.auth.currentUser?.emailConfirmedAt != null;
+    } catch (e, st) {
+      _logger.error('checkEmailConfirmation failed', error: e, stackTrace: st);
       return false;
     }
   }
@@ -198,9 +230,14 @@ class AuthService {
   // Send OTP for password reset
   Future<void> sendPasswordResetOTP(String email) async {
     try {
-      await _supabase.auth.signInWithOtp(email: email, emailRedirectTo: null);
-    } catch (e) {
-      rethrow;
+      await supabase.auth.signInWithOtp(email: email, emailRedirectTo: null);
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('sendPasswordResetOTP failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(
+        e,
+        context: 'AuthService.sendPasswordResetOTP',
+      );
     }
   }
 
@@ -212,7 +249,7 @@ class AuthService {
   }) async {
     try {
       // First verify the OTP which signs the user in
-      final response = await _supabase.auth.verifyOTP(
+      final response = await supabase.auth.verifyOTP(
         email: email,
         token: token,
         type: OtpType.magiclink,
@@ -220,15 +257,20 @@ class AuthService {
 
       if (response.user != null) {
         // Update the password
-        await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+        await supabase.auth.updateUser(UserAttributes(password: newPassword));
 
         // Sign out the user to ensure they login with new password
-        await _supabase.auth.signOut();
+        await supabase.auth.signOut();
       } else {
-        throw Exception('Failed to verify OTP');
+        throw AppAuthException('Failed to verify OTP', code: 'VERIFY_FAILED');
       }
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      _logger.error('resetPasswordWithOTP failed', error: e, stackTrace: st);
+      throw _errorHandler.handleError(
+        e,
+        context: 'AuthService.resetPasswordWithOTP',
+      );
     }
   }
 
@@ -256,7 +298,12 @@ class AuthService {
       }
 
       return true; // Email verified, allow access
-    } catch (e) {
+    } catch (e, st) {
+      _logger.error(
+        'checkAndHandleEmailVerification failed',
+        error: e,
+        stackTrace: st,
+      );
       // On error, allow access to prevent blocking the user
       return true;
     }

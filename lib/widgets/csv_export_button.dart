@@ -29,7 +29,11 @@ class CsvExportButton extends StatelessWidget {
       // Compact version for headers/modals
       return IconButton(
         onPressed: expensesCount > 0 ? () => _exportExpenses(context) : null,
-        icon: Icon(customIcon ?? Icons.download, color: Colors.white, size: 20),
+        icon: Icon(
+          customIcon ?? Icons.download_outlined,
+          color: Colors.white,
+          size: 20,
+        ),
         style: IconButton.styleFrom(
           backgroundColor: Colors.white.withValues(alpha: 0.2),
           shape: RoundedRectangleBorder(
@@ -46,7 +50,7 @@ class CsvExportButton extends StatelessWidget {
     // Full button version
     return ElevatedButton.icon(
       onPressed: expensesCount > 0 ? () => _exportExpenses(context) : null,
-      icon: Icon(customIcon ?? Icons.download),
+      icon: Icon(customIcon ?? Icons.download_outlined),
       label: Text(customLabel ?? 'Export Expenses to CSV'),
       style: ElevatedButton.styleFrom(
         backgroundColor: theme.colorScheme.primary,

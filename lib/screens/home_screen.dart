@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.person,
+                        Icons.person_outlined,
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       SizedBox(width: 8),
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.analytics,
+                        Icons.analytics_outlined,
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       SizedBox(width: 8),
@@ -253,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.logout,
+                        Icons.logout_outlined,
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       SizedBox(width: 8),
@@ -383,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                            Icons.warning_amber_rounded,
+                            Icons.warning_amber_outlined,
                             color:
                                 Theme.of(context).colorScheme.onErrorContainer,
                             size: 28,

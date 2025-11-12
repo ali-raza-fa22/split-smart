@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import '../utils/app_exceptions.dart';
+import '../widgets/error_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
@@ -119,12 +121,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Something bad happened")));
-        }
+      } on AppAuthException catch (e) {
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
+      } on Exception catch (e) {
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
@@ -186,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _emailController,
                       labelText: 'Email',
                       hintText: 'Enter your email address',
-                      prefixIcon: Icons.email,
+                      prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       errorText: _emailError,
                       onChanged: (value) => _clearEmailError(),
@@ -205,11 +205,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      prefixIcon: Icons.lock,
+                      prefixIcon: Icons.lock_outlined,
                       suffixIcon:
                           _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                       onSuffixIconPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
@@ -236,8 +236,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       prefixIcon: Icons.lock_outline,
                       suffixIcon:
                           _obscureConfirmPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                       onSuffixIconPressed: () {
                         setState(() {
                           _obscureConfirmPassword = !_obscureConfirmPassword;

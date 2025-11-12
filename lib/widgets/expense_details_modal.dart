@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:SPLITSMART/utils/date_formatter.dart';
-import '../services/chat_service.dart';
 import 'csv_export_button.dart';
-import '../utils/avatar_utils.dart';
+import 'user_list_item.dart';
+import '../services/chat_service.dart';
 
 class ExpenseDetailsModal extends StatefulWidget {
   final Map<String, dynamic> expenseData;
@@ -85,13 +84,6 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     final title = widget.expenseData['title'] ?? 'Unknown Expense';
     final amount =
         (widget.expenseData['total_amount'] as num?)?.toDouble() ?? 0.0;
-    final description = widget.expenseData['description'] as String?;
-    final paidByProfile =
-        widget.expenseData['profiles'] as Map<String, dynamic>?;
-    final paidByName = paidByProfile?['display_name'] ?? 'Unknown';
-    final createdAt =
-        DateTime.tryParse(widget.expenseData['created_at'] ?? '') ??
-        DateTime.now();
 
     return SafeArea(
       child: Material(
@@ -105,8 +97,8 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -120,7 +112,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 children: [
                   // Handle bar
                   Container(
-                    margin: const EdgeInsets.only(top: 14),
+                    margin: const EdgeInsets.only(top: 8, bottom: 12),
                     width: 50,
                     height: 4,
                     decoration: BoxDecoration(
@@ -138,20 +130,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                       padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Basic Details Section
-                          _buildBasicDetailsSection(
-                            paidByName,
-                            createdAt,
-                            description,
-                            theme,
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // Payment Status Section
-                          _buildPaymentStatusSection(theme),
-                        ],
+                        children: [_buildPaymentStatusSection(theme)],
                       ),
                     ),
                   ),
@@ -167,37 +146,29 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
   Widget _buildHeader(String title, double amount, ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: theme.colorScheme.primary,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
               ),
-              child: const Icon(
-                Icons.receipt_long,
-                color: Colors.white,
+              child: Icon(
+                Icons.receipt_long_outlined,
+                color: theme.colorScheme.onPrimary,
                 size: 18,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,18 +176,18 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   Text(
                     'Expense Details',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.onPrimary,
+                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
                       letterSpacing: 0.5,
                     ),
                     maxLines: 1,
@@ -232,7 +203,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 groupId: widget.expenseData['group_id'],
                 groupName: widget.expenseData['group_name'] ?? 'Group',
                 expensesCount: 1, // At least this expense exists
-                customIcon: Icons.download,
+                customIcon: Icons.download_outlined,
                 isCompact: true,
                 onExportComplete: () {
                   // Optional: Add any completion logic here
@@ -240,20 +211,16 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
               ),
               child: Text(
                 'Rs ${amount.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -261,78 +228,6 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBasicDetailsSection(
-    String paidByName,
-    DateTime createdAt,
-    String? description,
-    ThemeData theme,
-  ) {
-    final paidByProfile =
-        widget.expenseData['profiles'] as Map<String, dynamic>?;
-    final paidById = paidByProfile?['id'] ?? '';
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Details',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _buildDetailRow(
-            'Paid by',
-            paidByName,
-            Icons.person,
-            theme,
-            leading: AvatarUtils.buildUserAvatar(
-              paidById,
-              paidByName,
-              avatarUrl: paidByProfile?['avatar_url'],
-              theme,
-              radius: 16,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildDetailRow(
-            'Date',
-            DateFormatter.formatDate(createdAt),
-            Icons.calendar_today,
-            theme,
-          ),
-          if (description != null && description.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            _buildDetailRow(
-              'Description',
-              description,
-              Icons.description,
-              theme,
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -381,49 +276,19 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
         _paymentDetails.where((member) => member['is_paid'] == false).toList();
 
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondaryContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onPrimary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.payment,
-                  color: theme.colorScheme.primary,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Payment Status',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -433,13 +298,13 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
+                  color: theme.colorScheme.onSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${_paymentDetails.length} members',
                   style: TextStyle(
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: theme.colorScheme.surface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -453,79 +318,23 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
             _buildPaymentSection(
               'Paid (${paidMembers.length})',
               paidMembers,
-              theme.colorScheme.onPrimary,
-              Icons.check_circle,
-              theme,
+              theme.colorScheme.primary,
+              Icons.check_circle_outline,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
           ],
 
           // Unpaid members
           if (unpaidMembers.isNotEmpty) ...[
+            const Divider(height: 1),
+            const SizedBox(height: 12),
             _buildPaymentSection(
               'Pending (${unpaidMembers.length})',
               unpaidMembers,
-              theme.colorScheme.onPrimary,
-              Icons.pending,
-              theme,
+              theme.colorScheme.onSurface,
+              Icons.pending_outlined,
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    IconData icon,
-    ThemeData theme, {
-    Widget? leading,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          leading ??
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: theme.colorScheme.primary, size: 18),
-              ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -536,43 +345,23 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
     List<Map<String, dynamic>> members,
     Color color,
     IconData icon,
-    ThemeData theme,
   ) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 16),
-              ),
+              Icon(icon, color: color, size: 18),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Column(
             children:
                 members.map((member) {
                   final profile = member['profiles'] as Map<String, dynamic>?;
@@ -580,46 +369,13 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                   final userId = profile?['id'] ?? '';
                   final amount = (member['amount_owed'] as num).toDouble();
 
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: color.withValues(alpha: 0.4)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AvatarUtils.buildUserAvatar(
-                          userId,
-                          displayName,
-                          avatarUrl: profile?['avatar_url'],
-                          theme,
-                          radius: 12,
-                          fontSize: 11,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          displayName,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: color,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '(Rs ${amount.toStringAsFixed(2)})',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: color.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: UserListItem(
+                      userId: userId,
+                      name: displayName,
+                      avatarUrl: profile?['avatar_url'],
+                      amount: 'Rs ${amount.toStringAsFixed(2)}',
                     ),
                   );
                 }).toList(),

@@ -139,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.analytics,
+                        Icons.analytics_outlined,
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                     ),
@@ -165,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.receipt_long,
+                        Icons.receipt_long_outlined,
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
@@ -191,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.account_balance_wallet,
+                        Icons.account_balance_wallet_outlined,
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
                     ),
@@ -218,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.settings,
+                        Icons.settings_outlined,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
+/// A utility class for consistent date and time formatting throughout the app.
 class DateFormatter {
-  // Format timestamp for message bubbles (WhatsApp style)
+  /// Get current timestamp in "yyyyMMddHHmmss" format
+  static String getCurrentTimestamp() {
+    final currentTime = DateTime.now();
+    return '${currentTime.year}${currentTime.month.toString().padLeft(2, '0')}${currentTime.day.toString().padLeft(2, '0')}${currentTime.hour.toString().padLeft(2, '0')}${currentTime.minute.toString().padLeft(2, '0')}${currentTime.second.toString().padLeft(2, '0')}';
+  }
+
+  /// Formats a UTC timestamp into a human-readable local time for chat messages.
+  ///
+  /// Example: `"2025-11-08T10:15:30Z"` → `"3:15 PM"`
   static String formatMessageTime(String? createdAt) {
     if (createdAt == null) return '';
 
@@ -24,7 +33,7 @@ class DateFormatter {
     return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
   }
 
-  // Format date (e.g., "Jan 15")
+  /// Format date (e.g., "Jan 15")
   static String formatDate(DateTime date) {
     const months = [
       'Jan',
@@ -43,7 +52,7 @@ class DateFormatter {
     return '${months[date.month - 1]} ${date.day}';
   }
 
-  // Get day name (e.g., "Monday")
+  /// Get day name (e.g., "Monday")
   static String _getDayName(DateTime date) {
     const days = [
       'Monday',
@@ -193,7 +202,7 @@ Offset: ${localTime.timeZoneOffset}
     }
   }
 
-  // Format full date and time (e.g., "Jan 15, 2024 2:30 PM")
+  /// Format full date and time (e.g., "Jan 15, 2024 2:30 PM")
   static String formatFullDateTime(dynamic dt) {
     if (dt == null) return '-';
     try {

@@ -1,3 +1,4 @@
+import 'package:SPLITSMART/utils/app_constants.dart';
 import 'package:flutter/material.dart';
 
 class DetailsModal extends StatefulWidget {
@@ -75,8 +76,8 @@ class _DetailsModalState extends State<DetailsModal>
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
             ),
             boxShadow: [
               BoxShadow(
@@ -90,7 +91,7 @@ class _DetailsModalState extends State<DetailsModal>
             children: [
               // Handle bar
               Container(
-                margin: const EdgeInsets.only(top: 14),
+                margin: const EdgeInsets.only(top: 8, bottom: 12),
                 width: 50,
                 height: 4,
                 decoration: BoxDecoration(
@@ -119,22 +120,14 @@ class _DetailsModalState extends State<DetailsModal>
   Widget _buildHeader(ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withValues(alpha: 0.8),
-            theme.colorScheme.secondary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: theme.colorScheme.primary,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Container(
@@ -142,12 +135,12 @@ class _DetailsModalState extends State<DetailsModal>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
               ),
-              child: Icon(widget.icon, color: Colors.white, size: 20),
+              child: Icon(
+                widget.icon,
+                color: Colors.white,
+                size: AppConstants.itemIconSize,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -169,7 +162,7 @@ class _DetailsModalState extends State<DetailsModal>
                   Text(
                     widget.subtitle,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -178,14 +171,10 @@ class _DetailsModalState extends State<DetailsModal>
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 widget.totalAmount,
@@ -266,7 +255,7 @@ void showDetailsModal(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: Colors.black,
     builder:
         (context) => DetailsModal(
           title: title,

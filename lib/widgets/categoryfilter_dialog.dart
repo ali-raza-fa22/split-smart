@@ -52,7 +52,7 @@ class CategoryFilterDialog extends StatelessWidget {
                 trailing:
                     isSelected
                         ? Icon(
-                          Icons.check,
+                          Icons.check_outlined,
                           color: Theme.of(context).colorScheme.primary,
                         )
                         : null,

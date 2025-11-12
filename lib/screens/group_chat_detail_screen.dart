@@ -496,7 +496,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.all_inbox,
+                                  Icons.all_inbox_outlined,
                                   color: Theme.of(context).colorScheme.tertiary,
                                 ),
                                 SizedBox(width: 8),
@@ -509,7 +509,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.chat,
+                                  Icons.chat_outlined,
                                   color: Theme.of(context).colorScheme.tertiary,
                                 ),
                                 SizedBox(width: 8),
@@ -522,7 +522,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.receipt,
+                                  Icons.receipt_outlined,
                                   color: Theme.of(context).colorScheme.tertiary,
                                 ),
                                 SizedBox(width: 8),
@@ -535,7 +535,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.payment,
+                                  Icons.payment_outlined,
                                   color: Theme.of(context).colorScheme.tertiary,
                                 ),
                                 SizedBox(width: 8),
@@ -551,12 +551,12 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                         children: [
                           Icon(
                             _selectedCategory == 'all'
-                                ? Icons.all_inbox
+                                ? Icons.all_inbox_outlined
                                 : _selectedCategory == 'expense'
-                                ? Icons.receipt
+                                ? Icons.receipt_long_outlined
                                 : _selectedCategory == 'payment'
-                                ? Icons.payment
-                                : Icons.chat,
+                                ? Icons.payment_outlined
+                                : Icons.chat_outlined,
                           ),
                           const SizedBox(width: 4),
                           const Icon(Icons.arrow_drop_down),
@@ -649,7 +649,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.receipt_long,
+                                  Icons.receipt_long_outlined,
                                   color:
                                       Theme.of(context).colorScheme.secondary,
                                 ),
@@ -677,7 +677,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.settings,
+                                  Icons.settings_outlined,
                                   color:
                                       Theme.of(context).colorScheme.secondary,
                                 ),
@@ -704,10 +704,10 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                   children: [
                     Icon(
                       _selectedCategory == 'expense'
-                          ? Icons.receipt
+                          ? Icons.receipt_outlined
                           : _selectedCategory == 'payment'
-                          ? Icons.payment
-                          : Icons.chat,
+                          ? Icons.payment_outlined
+                          : Icons.chat_outlined,
                       size: 16,
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
@@ -832,7 +832,10 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
       ),
       title: Text('${_selectedMessageIds.length} selected'),
       actions: [
-        IconButton(icon: const Icon(Icons.delete), onPressed: _deleteMessages),
+        IconButton(
+          icon: const Icon(Icons.delete_outlined),
+          onPressed: _deleteMessages,
+        ),
       ],
     );
   }
@@ -975,7 +978,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.receipt,
+                                Icons.receipt_outlined,
                                 size: 14,
                                 color: theme.colorScheme.onPrimary,
                               ),
@@ -1050,7 +1053,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.person,
+                                      Icons.person_outlined,
                                       size: 16,
                                       color: theme.colorScheme.secondary,
                                     ),
@@ -1088,7 +1091,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.receipt,
+                                      Icons.receipt_outlined,
                                       size: 16,
                                       color: theme.colorScheme.onPrimary,
                                     ),
@@ -1216,7 +1219,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
               ),
               child: IconButton(
                 icon: Icon(
-                  Icons.send,
+                  Icons.send_sharp,
                   size: 20,
                   color: theme.colorScheme.onPrimary,
                 ),
@@ -1346,7 +1349,7 @@ class _GroupChatDetailScreenState extends State<GroupChatDetailScreen>
                     radius: 40,
                     backgroundColor: theme.colorScheme.secondaryContainer,
                     child: Icon(
-                      Icons.group,
+                      Icons.group_outlined,
                       size: 40,
                       color: theme.colorScheme.onSecondaryContainer,
                     ),

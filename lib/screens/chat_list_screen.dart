@@ -271,7 +271,7 @@ class _ChatListScreenState extends State<ChatListScreen>
           }
         },
         tooltip: 'Create Group',
-        child: const Icon(Icons.group_add),
+        child: const Icon(Icons.group_add_outlined),
       ),
     );
   }

@@ -135,7 +135,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                               _profile!['avatar_url']
                                                   .toString()
                                                   .isEmpty))
-                                      ? const Icon(Icons.person, size: 48)
+                                      ? const Icon(
+                                        Icons.person_outlined,
+                                        size: 48,
+                                      )
                                       : null,
                             ),
                             Positioned(
@@ -151,7 +154,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ),
                                   padding: const EdgeInsets.all(8),
                                   child: const Icon(
-                                    Icons.camera_alt,
+                                    Icons.camera_alt_outlined,
                                     color: Colors.white,
                                     size: 20,
                                   ),
@@ -166,7 +169,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         controller: _usernameController,
                         labelText: 'Username',
                         hintText: 'Enter your username',
-                        prefixIcon: Icons.person,
+                        prefixIcon: Icons.person_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a username';
@@ -179,7 +182,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         controller: _displayNameController,
                         labelText: 'Display Name',
                         hintText: 'Enter your display name',
-                        prefixIcon: Icons.badge,
+                        prefixIcon: Icons.badge_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a display name';

@@ -227,7 +227,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: 54),
                     Icon(
-                      Icons.verified_user,
+                      Icons.verified_user_outlined,
                       size: 80,
                       color: colorScheme.primary,
                     ),
@@ -253,7 +253,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       controller: _otpController,
                       labelText: 'Verification Code',
                       hintText: 'Enter 6-digit code',
-                      prefixIcon: Icons.security,
+                      prefixIcon: Icons.security_outlined,
                       keyboardType: TextInputType.number,
                       errorText: _otpError,
                       onChanged: (value) => _clearOtpError(),
