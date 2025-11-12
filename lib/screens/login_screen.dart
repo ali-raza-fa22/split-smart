@@ -169,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       labelText: 'Email',
                       hintText: 'Enter your email address',
-                      prefixIcon: Icons.email,
+                      prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       errorText: _emailError,
                       onChanged: (value) => _clearEmailError(),
@@ -188,11 +188,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      prefixIcon: Icons.lock,
+                      prefixIcon: Icons.lock_outlined,
                       suffixIcon:
                           _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                       onSuffixIconPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;

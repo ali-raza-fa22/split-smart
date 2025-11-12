@@ -361,12 +361,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                         isZero
                             ? 'Settled up'
                             : '${isPositive ? '+' : ''}Rs ${(balance < 0 ? 0.0 : balance).toStringAsFixed(2)}',
-                    color:
-                        isZero
-                            ? theme.colorScheme.onSurfaceVariant
-                            : isPositive
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.error,
+
                     avatar: AvatarUtils.buildUserAvatar(
                       userId,
                       memberName,

@@ -236,11 +236,11 @@ class _AllBalanceTransactionsScreenState
       case 'spend':
         return Icons.remove_circle_outline;
       case 'loan':
-        return Icons.credit_card;
+        return Icons.credit_card_outlined;
       case 'repay':
         return Icons.check_circle_outline;
       default:
-        return Icons.swap_horiz;
+        return Icons.swap_horiz_outlined;
     }
   }
 
@@ -342,7 +342,7 @@ class _AllBalanceTransactionsScreenState
     };
     final Map<String, IconData> typeIcons = {
       'spend': Icons.remove_circle_outline,
-      'loan': Icons.credit_card,
+      'loan': Icons.credit_card_outlined,
       'repay': Icons.check_circle_outline,
     };
     final Map<String, String> typeLabels = {
@@ -400,7 +400,7 @@ class _AllBalanceTransactionsScreenState
               child: Row(
                 children: [
                   Icon(
-                    Icons.filter_list,
+                    Icons.filter_list_outlined,
                     size: 16,
                     color: theme.colorScheme.onPrimary,
                   ),

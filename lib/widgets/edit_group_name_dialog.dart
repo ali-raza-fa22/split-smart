@@ -111,7 +111,7 @@ class _EditGroupNameDialogState extends State<EditGroupNameDialog> {
               controller: _controller,
               labelText: 'Group Name',
               hintText: 'Enter group name',
-              prefixIcon: Icons.group,
+              prefixIcon: Icons.group_outlined,
               errorText: _errorText,
               onChanged: (value) => _clearError(),
               validator: (value) {

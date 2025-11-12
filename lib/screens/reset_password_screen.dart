@@ -130,7 +130,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       appBar: AppBar(
         title: const Text('Reset Password'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -153,7 +153,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    Icon(Icons.lock_open, size: 80, color: colorScheme.primary),
+                    Icon(
+                      Icons.lock_open_outlined,
+                      size: 80,
+                      color: colorScheme.primary,
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       'Enter OTP & New Password',
@@ -178,7 +182,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         labelText: 'OTP',
                         hintText: 'Enter the 6-digit code',
                         prefixIcon: Icon(
-                          Icons.security,
+                          Icons.security_outlined,
                           color: colorScheme.primary,
                         ),
                       ),
@@ -201,14 +205,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         labelText: 'New Password',
                         hintText: 'Enter your new password',
                         prefixIcon: Icon(
-                          Icons.lock,
+                          Icons.lock_outlined,
                           color: colorScheme.primary,
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureNewPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                             color: colorScheme.onSurfaceVariant,
                           ),
                           onPressed: () {
@@ -242,8 +246,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureConfirmPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                             color: colorScheme.onSurfaceVariant,
                           ),
                           onPressed: () {

@@ -24,7 +24,7 @@ class SaveTransactionButton extends StatelessWidget {
       return IconButton(
         onPressed: () => _saveTransaction(context),
         icon: Icon(
-          customIcon ?? Icons.save_alt,
+          customIcon ?? Icons.save_alt_outlined,
           color: Theme.of(context).colorScheme.onPrimary,
           size: 20,
         ),
@@ -43,7 +43,7 @@ class SaveTransactionButton extends StatelessWidget {
 
     return BrandButton2(
       label: customLabel ?? 'Save Transaction',
-      icon: customIcon ?? Icons.save_alt,
+      icon: customIcon ?? Icons.save_alt_outlined,
       isActive: true,
       onPressed: () => _saveTransaction(context),
     );

@@ -207,7 +207,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         controller: _groupNameController,
                         labelText: 'Group Name',
                         hintText: 'Enter group name',
-                        prefixIcon: Icons.group,
+                        prefixIcon: Icons.group_outlined,
                         errorText: _groupNameError,
                         onChanged: (value) => _clearGroupNameError(),
                         validator: (value) {
@@ -374,7 +374,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         backgroundColor: theme.colorScheme.tertiary,
                         onPressed: _isCreatingGroup ? null : _createGroup,
                         isLoading: _isCreatingGroup,
-                        icon: Icons.group_add,
+                        icon: Icons.group_add_outlined,
                       ),
                     ),
                   ],

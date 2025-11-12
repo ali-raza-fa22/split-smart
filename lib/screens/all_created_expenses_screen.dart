@@ -125,7 +125,7 @@ class _AllCreatedExpensesScreenState extends State<AllCreatedExpensesScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          Icons.receipt,
+                          Icons.receipt_outlined,
                           color: theme.colorScheme.secondary,
                           size: 20,
                         ),

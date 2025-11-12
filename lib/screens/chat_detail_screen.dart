@@ -690,7 +690,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ),
       title: Text('${_selectedMessageIds.length} selected'),
       actions: [
-        IconButton(icon: const Icon(Icons.delete), onPressed: _deleteMessages),
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          onPressed: _deleteMessages,
+        ),
       ],
     );
   }
