@@ -244,7 +244,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
                 ),
                 child: ElevatedButton.icon(
                   icon: Icon(
-                    Icons.delete,
+                    Icons.delete_outlined,
                     color: Theme.of(context).colorScheme.onError,
                   ),
                   label: Text(
@@ -287,7 +287,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen>
               Chip(
                 label: Text('${widget.expensesCount} Expenses'),
                 avatar: Icon(
-                  Icons.receipt_long,
+                  Icons.receipt_long_outlined,
                   size: 18,
                   color: Theme.of(context).colorScheme.onPrimary,
                 ),

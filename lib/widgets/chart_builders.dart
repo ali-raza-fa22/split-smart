@@ -6,75 +6,6 @@ import 'details_modal.dart';
 import 'stat_item.dart';
 
 class ChartBuilders {
-  // Build expense overview pie chart
-  static Widget buildExpenseOverviewChart(
-    BuildContext context,
-    List<Map<String, dynamic>> expenseShares,
-    List<Map<String, dynamic>> createdExpenses,
-    ThemeData theme,
-  ) {
-    final totalOwed = expenseShares
-        .where((share) => !share['is_paid'])
-        .fold(0.0, (sum, share) => sum + (share['amount_owed'] as num));
-
-    final totalPaid = expenseShares
-        .where((share) => share['is_paid'])
-        .fold(0.0, (sum, share) => sum + (share['amount_owed'] as num));
-
-    final totalCreated = createdExpenses.fold(
-      0.0,
-      (sum, expense) => sum + (expense['total_amount'] as num),
-    );
-
-    // Transform data for modals
-    final owedExpenses = AppUtils.transformExpenseSharesForModal(
-      expenseShares.where((share) => !share['is_paid']).toList(),
-    );
-    final paidExpenses = AppUtils.transformExpenseSharesForModal(
-      expenseShares.where((share) => share['is_paid']).toList(),
-    );
-    final createdExpensesForModal = AppUtils.transformCreatedExpensesForModal(
-      createdExpenses,
-    );
-
-    return PieChartWidget(
-      data: [
-        ChartDataItem(
-          label: 'Owed',
-          value: totalOwed,
-          color: Theme.of(context).colorScheme.error,
-          icon: Icons.account_balance_wallet,
-        ),
-        ChartDataItem(
-          label: 'Paid',
-          value: totalPaid,
-          color: Theme.of(context).colorScheme.primary,
-          icon: Icons.check_circle,
-        ),
-        ChartDataItem(
-          label: 'Created',
-          value: totalCreated,
-          color: Theme.of(context).colorScheme.secondary,
-          icon: Icons.add_circle,
-        ),
-      ],
-      title: 'Expense Overview',
-      subtitle: 'Distribution of your expenses',
-      size: AppConstants.defaultChartSize,
-      onTap:
-          () => _showExpenseOverviewModal(
-            context,
-            theme,
-            totalOwed,
-            totalPaid,
-            totalCreated,
-            owedExpenses,
-            paidExpenses,
-            createdExpensesForModal,
-          ),
-    );
-  }
-
   // Build expense shares pie chart
   static Widget buildExpenseSharesChart(
     BuildContext context,
@@ -92,91 +23,19 @@ class ChartBuilders {
           label: 'Paid',
           value: paidExpenses.toDouble(),
           color: Theme.of(context).colorScheme.tertiary,
-          icon: Icons.check_circle,
+          icon: Icons.check_circle_outline,
         ),
         ChartDataItem(
           label: 'Pending',
           value: pendingExpenses.toDouble(),
-          color: Theme.of(context).colorScheme.secondary,
-          icon: Icons.pending,
+          color: Theme.of(context).colorScheme.primary,
+          icon: Icons.pending_outlined,
         ),
       ],
-      title: 'Expense Shares',
+      title: 'Your expenses',
       subtitle: 'Paid vs Pending',
       size: AppConstants.defaultChartSize,
       onTap: () => _showExpenseSharesModal(context, theme, expenseShares),
-    );
-  }
-
-  // Build payment details pie chart
-  static Widget buildPaymentDetailsChart(
-    BuildContext context,
-    List<Map<String, dynamic>> expenseShares,
-    ThemeData theme,
-  ) {
-    return PieChartWidget(
-      data: [
-        ChartDataItem(
-          label: 'Average',
-          value: AppUtils.calculateAverageAmount(expenseShares, 'amount_owed'),
-          color: Theme.of(context).colorScheme.primary,
-          icon: Icons.calculate,
-        ),
-        ChartDataItem(
-          label: 'Maximum',
-          value: AppUtils.calculateMaxAmount(expenseShares, 'amount_owed'),
-          color: Theme.of(context).colorScheme.error,
-          icon: Icons.trending_up,
-        ),
-      ],
-      title: 'Payment Details',
-      subtitle: 'Average vs Maximum Amount',
-      size: AppConstants.defaultChartSize,
-      onTap: () => _showPaymentDetailsModal(context, theme, expenseShares),
-    );
-  }
-
-  // Build payment status pie chart
-  static Widget buildPaymentStatusChart(
-    BuildContext context,
-    List<Map<String, dynamic>> expenseShares,
-    ThemeData theme,
-  ) {
-    final paidExpenses =
-        expenseShares.where((share) => share['is_paid']).length;
-    final pendingExpenses =
-        expenseShares.where((share) => !share['is_paid']).length;
-
-    final chartData = <ChartDataItem>[
-      if (paidExpenses > 0)
-        ChartDataItem(
-          label: 'Paid',
-          value: paidExpenses.toDouble(),
-          color: Colors.green,
-          icon: Icons.check_circle,
-        ),
-      if (pendingExpenses > 0)
-        ChartDataItem(
-          label: 'Pending',
-          value: pendingExpenses.toDouble(),
-          color: Theme.of(context).colorScheme.primary,
-          icon: Icons.pending,
-        ),
-    ];
-
-    return PieChartWidget(
-      data: chartData,
-      title: 'Payment Status',
-      subtitle: 'Distribution of expense payments',
-      centerText: 'Total',
-      size: AppConstants.defaultChartSize,
-      onTap:
-          () => _showPaymentStatusModal(
-            context,
-            theme,
-            paidExpenses,
-            pendingExpenses,
-          ),
     );
   }
 
@@ -209,14 +68,14 @@ class ChartBuilders {
           label: 'Active',
           value: activeGroups.toDouble(),
           color: Theme.of(context).colorScheme.tertiary,
-          icon: Icons.chat,
+          icon: Icons.chat_outlined,
         ),
       if (inactiveGroups > 0)
         ChartDataItem(
           label: 'Inactive',
           value: inactiveGroups.toDouble(),
           color: Colors.grey,
-          icon: Icons.group,
+          icon: Icons.group_outlined,
         ),
     ];
 
@@ -227,70 +86,6 @@ class ChartBuilders {
       centerText: 'Groups',
       size: AppConstants.defaultChartSize,
       onTap: () => _showGroupActivityModal(context, theme, groups),
-    );
-  }
-
-  // Private modal methods
-  static void _showExpenseOverviewModal(
-    BuildContext context,
-    ThemeData theme,
-    double totalOwed,
-    double totalPaid,
-    double totalCreated,
-    List<Map<String, dynamic>> owedExpenses,
-    List<Map<String, dynamic>> paidExpenses,
-    List<Map<String, dynamic>> createdExpensesForModal,
-  ) {
-    showDetailsModal(
-      context,
-      title: 'Expense Overview',
-      subtitle: 'Detailed breakdown of your expenses',
-      icon: Icons.pie_chart,
-      children: [
-        StatItem(
-          label: 'Total Owed',
-          value: AppUtils.formatCurrency(totalOwed),
-          icon: Icons.account_balance_wallet,
-          color: Theme.of(context).colorScheme.error,
-          onTap:
-              () => _showExpenseDetailsModal(
-                context,
-                'Expenses You Owe',
-                owedExpenses,
-              ),
-        ),
-        StatItem(
-          label: 'Total Paid',
-          value: AppUtils.formatCurrency(totalPaid),
-          icon: Icons.check_circle,
-          color: Theme.of(context).colorScheme.primary,
-          onTap:
-              () => _showExpenseDetailsModal(
-                context,
-                'Expenses You Paid',
-                paidExpenses,
-              ),
-        ),
-        StatItem(
-          label: 'Total Created',
-          value: AppUtils.formatCurrency(totalCreated),
-          icon: Icons.add_circle,
-          color: Theme.of(context).colorScheme.secondary,
-          onTap:
-              () => _showExpenseDetailsModal(
-                context,
-                'Expenses You Created',
-                createdExpensesForModal,
-              ),
-        ),
-      ],
-      isEmpty: false,
-      totalAmount: AppUtils.formatCurrency(
-        totalOwed + totalPaid + totalCreated,
-      ),
-      emptyTitle: 'No expenses found',
-      emptySubtitle: 'You haven\'t recorded any expenses yet',
-      emptyIcon: Icons.receipt_outlined,
     );
   }
 
@@ -317,15 +112,14 @@ class ChartBuilders {
     showDetailsModal(
       context,
       title: 'Expense Shares',
-      subtitle: 'Breakdown of your expense shares',
+      subtitle: 'Breakdown of your expenses',
       totalAmount: totalExpenses.toString(),
-      icon: Icons.pie_chart,
+      icon: Icons.pie_chart_outline,
       children: [
         StatItem(
           label: 'Total Shares',
           value: totalExpenses.toString(),
-          icon: Icons.list,
-          color: Theme.of(context).colorScheme.tertiary,
+          icon: Icons.list_outlined,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -336,15 +130,14 @@ class ChartBuilders {
         StatItem(
           label: 'Payment Rate',
           value: AppUtils.formatPercentage(paymentRate),
-          icon: Icons.trending_up,
-          color: theme.colorScheme.primary,
+          icon: Icons.trending_up_outlined,
+
           onTap: null,
         ),
         StatItem(
           label: 'Paid',
           value: paidExpenses.toString(),
-          icon: Icons.check_circle,
-          color: Theme.of(context).colorScheme.tertiary,
+          icon: Icons.check_circle_outline,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -355,8 +148,7 @@ class ChartBuilders {
         StatItem(
           label: 'Pending',
           value: pendingExpenses.toString(),
-          icon: Icons.pending,
-          color: Theme.of(context).colorScheme.primary,
+          icon: Icons.pending_outlined,
           onTap:
               () => _showExpenseDetailsModal(
                 context,
@@ -370,91 +162,6 @@ class ChartBuilders {
       emptySubtitle: 'You have no expense shares yet',
       emptyIcon: Icons.inbox_outlined,
     );
-  }
-
-  static void _showPaymentDetailsModal(
-    BuildContext context,
-    ThemeData theme,
-    List<Map<String, dynamic>> expenseShares,
-  ) {
-    final avgAmountOwed = AppUtils.calculateAverageAmount(
-      expenseShares,
-      'amount_owed',
-    );
-    final maxAmountOwed = AppUtils.calculateMaxAmount(
-      expenseShares,
-      'amount_owed',
-    );
-
-    showDetailsModal(
-      context,
-      title: 'Payment Details',
-      subtitle: 'Amount statistics',
-      totalAmount: AppUtils.formatCurrency(avgAmountOwed + maxAmountOwed),
-      icon: Icons.payment,
-      children: [
-        StatItem(
-          label: 'Average Amount',
-          value: AppUtils.formatCurrency(avgAmountOwed),
-          icon: Icons.calculate,
-          color: theme.colorScheme.primary,
-          onTap: null,
-        ),
-        StatItem(
-          label: 'Maximum Amount',
-          value: AppUtils.formatCurrency(maxAmountOwed),
-          icon: Icons.trending_up,
-          color: theme.colorScheme.error,
-          onTap: null,
-        ),
-      ],
-      isEmpty: expenseShares.isEmpty,
-      emptyTitle: 'No payment data',
-      emptySubtitle: 'You have no expense shares yet',
-      emptyIcon: Icons.payment_outlined,
-    );
-  }
-
-  static void _showPaymentStatusModal(
-    BuildContext context,
-    ThemeData theme,
-    int paidExpenses,
-    int pendingExpenses,
-  ) {
-    final total = paidExpenses + pendingExpenses;
-    if (total > 0) {
-      showDetailsModal(
-        context,
-        title: 'Payment Status',
-        subtitle: 'Breakdown of expense payment status',
-        totalAmount: total.toString(),
-        icon: Icons.payment,
-        children: [
-          if (paidExpenses > 0)
-            _buildPaymentBreakdownItem(
-              context,
-              'Paid',
-              paidExpenses,
-              total,
-              Theme.of(context).colorScheme.tertiary,
-              Icons.check_circle,
-            ),
-          if (pendingExpenses > 0)
-            _buildPaymentBreakdownItem(
-              context,
-              'Pending',
-              pendingExpenses,
-              total,
-              Theme.of(context).colorScheme.primary,
-              Icons.pending,
-            ),
-        ],
-        isEmpty: false,
-        emptyTitle: 'No expenses found',
-        emptySubtitle: 'You haven\'t recorded any expenses yet',
-        emptyIcon: Icons.receipt_outlined,
-      );
-    }
   }
 
   static void _showGroupActivityModal(
@@ -477,36 +184,26 @@ class ChartBuilders {
         }).toList();
 
     final totalGroups = groups.length;
-    final activityRate =
-        totalGroups > 0 ? (activeGroups.length / totalGroups * 100) : 0.0;
 
     showDetailsModal(
       context,
       title: 'Group Activity',
       subtitle: 'Breakdown of your groups',
       totalAmount: totalGroups.toString(),
-      icon: Icons.group,
+      icon: Icons.group_outlined,
       children: [
         StatItem(
           label: 'Total Groups',
           value: totalGroups.toString(),
-          icon: Icons.list,
-          color: theme.colorScheme.tertiary,
+          icon: Icons.list_outlined,
           onTap: null,
         ),
-        StatItem(
-          label: 'Activity Rate',
-          value: AppUtils.formatPercentage(activityRate),
-          icon: Icons.trending_up,
-          color: theme.colorScheme.primary,
-          onTap: null,
-        ),
+
         if (activeGroups.isNotEmpty)
           StatItem(
             label: 'Active Groups',
             value: activeGroups.length.toString(),
-            icon: Icons.chat,
-            color: Theme.of(context).colorScheme.tertiary,
+            icon: Icons.chat_outlined,
             onTap:
                 () => _showGroupListModal(
                   context,
@@ -519,8 +216,7 @@ class ChartBuilders {
           StatItem(
             label: 'Inactive Groups',
             value: inactiveGroups.length.toString(),
-            icon: Icons.group,
-            color: Colors.grey,
+            icon: Icons.group_outlined,
             onTap:
                 () => _showGroupListModal(
                   context,
@@ -548,7 +244,7 @@ class ChartBuilders {
       title: title,
       subtitle: '${groups.length} group${groups.length != 1 ? 's' : ''}',
       totalAmount: groups.length.toString(),
-      icon: Icons.group,
+      icon: Icons.group_outlined,
       children:
           groups.map((group) {
             final groupName = group['name'] ?? 'Unknown Group';
@@ -568,8 +264,7 @@ class ChartBuilders {
             return StatItem(
               label: '$groupName • $lastActivity',
               value: '$memberCount members',
-              icon: Icons.group,
-              color: Theme.of(context).colorScheme.primary,
+              icon: Icons.group_outlined,
               onTap: null,
             );
           }).toList(),
@@ -596,7 +291,7 @@ class ChartBuilders {
               sum + (expense['amount_owed'] ?? expense['total_amount'] ?? 0),
         ),
       ),
-      icon: Icons.receipt_long,
+      icon: Icons.receipt_long_outlined,
       children:
           expenses.map((expense) {
             final expenseName = expense['expense_name'] ?? 'Unknown Expense';
@@ -608,8 +303,7 @@ class ChartBuilders {
             return StatItem(
               label: '$expenseName • $groupName',
               value: AppUtils.formatCurrency(amount),
-              icon: isPaid ? Icons.check_circle : Icons.pending,
-              color: isPaid ? Colors.green : Colors.orange,
+              icon: isPaid ? Icons.check_circle_outline : Icons.pending,
               onTap: null,
             );
           }).toList(),
@@ -617,61 +311,6 @@ class ChartBuilders {
       emptyTitle: 'No expenses found',
       emptySubtitle: 'There are no expenses in this category yet',
       emptyIcon: Icons.inbox_outlined,
-    );
-  }
-
-  static Widget _buildPaymentBreakdownItem(
-    BuildContext context,
-    String label,
-    int value,
-    int total,
-    Color color,
-    IconData icon,
-  ) {
-    final percentage = total > 0 ? (value / total * 100) : 0.0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '$value expenses (${percentage.toStringAsFixed(1)}%)',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

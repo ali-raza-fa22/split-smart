@@ -46,7 +46,7 @@ class ExpenseListItem extends StatelessWidget {
             backgroundColor:
                 isPaid ? theme.colorScheme.tertiary : theme.colorScheme.primary,
             child: Icon(
-              isPaid ? Icons.check : Icons.receipt,
+              isPaid ? Icons.check_outlined : Icons.receipt_outlined,
               color: Colors.white,
             ),
           ),

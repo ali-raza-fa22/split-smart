@@ -1,16 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BalanceService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final supabase = Supabase.instance.client;
 
   // Get user's current balance
   Future<Map<String, dynamic>?> getUserBalance() async {
     try {
       final balance =
-          await _supabase
+          await supabase
               .from('user_balances')
               .select('*')
-              .eq('user_id', _supabase.auth.currentUser!.id)
+              .eq('user_id', supabase.auth.currentUser!.id)
               .single();
       return balance;
     } catch (e) {
@@ -26,9 +26,9 @@ class BalanceService {
   Future<Map<String, dynamic>> createUserBalance() async {
     try {
       final balance =
-          await _supabase
+          await supabase
               .from('user_balances')
-              .insert({'user_id': _supabase.auth.currentUser!.id})
+              .insert({'user_id': supabase.auth.currentUser!.id})
               .select()
               .single();
       return balance;
@@ -59,8 +59,8 @@ class BalanceService {
         final remainingAmount = amount - amountToRepay;
 
         // Repay loan
-        await _supabase.from('balance_transactions').insert({
-          'user_id': _supabase.auth.currentUser!.id,
+        await supabase.from('balance_transactions').insert({
+          'user_id': supabase.auth.currentUser!.id,
           'transaction_type': 'repay',
           'amount': amountToRepay,
           'title': 'Auto-repay: $title',
@@ -69,8 +69,8 @@ class BalanceService {
 
         // Add remaining amount to balance (if any)
         if (remainingAmount > 0) {
-          await _supabase.from('balance_transactions').insert({
-            'user_id': _supabase.auth.currentUser!.id,
+          await supabase.from('balance_transactions').insert({
+            'user_id': supabase.auth.currentUser!.id,
             'transaction_type': 'add',
             'amount': remainingAmount,
             'title': title,
@@ -87,8 +87,8 @@ class BalanceService {
         };
       } else {
         // No outstanding loan, add directly to balance
-        await _supabase.from('balance_transactions').insert({
-          'user_id': _supabase.auth.currentUser!.id,
+        await supabase.from('balance_transactions').insert({
+          'user_id': supabase.auth.currentUser!.id,
           'transaction_type': 'add',
           'amount': amount,
           'title': title,
@@ -123,8 +123,8 @@ class BalanceService {
 
       if (availableBalance >= amount) {
         // Sufficient balance - spend from balance
-        await _supabase.from('balance_transactions').insert({
-          'user_id': _supabase.auth.currentUser!.id,
+        await supabase.from('balance_transactions').insert({
+          'user_id': supabase.auth.currentUser!.id,
           'transaction_type': 'spend',
           'amount': amount,
           'title': title,
@@ -147,8 +147,8 @@ class BalanceService {
 
         // Spend remaining balance
         if (amountFromBalance > 0) {
-          await _supabase.from('balance_transactions').insert({
-            'user_id': _supabase.auth.currentUser!.id,
+          await supabase.from('balance_transactions').insert({
+            'user_id': supabase.auth.currentUser!.id,
             'transaction_type': 'spend',
             'amount': amountFromBalance,
             'title': '$title (from balance)',
@@ -159,8 +159,8 @@ class BalanceService {
         }
 
         // Add loan for remaining amount
-        await _supabase.from('balance_transactions').insert({
-          'user_id': _supabase.auth.currentUser!.id,
+        await supabase.from('balance_transactions').insert({
+          'user_id': supabase.auth.currentUser!.id,
           'transaction_type': 'loan',
           'amount': amountFromLoan,
           'title': '$title (loan)',
@@ -204,8 +204,8 @@ class BalanceService {
         );
       }
 
-      await _supabase.from('balance_transactions').insert({
-        'user_id': _supabase.auth.currentUser!.id,
+      await supabase.from('balance_transactions').insert({
+        'user_id': supabase.auth.currentUser!.id,
         'transaction_type': 'repay',
         'amount': amount,
         'title': title,
@@ -223,10 +223,10 @@ class BalanceService {
     int? offset,
   }) async {
     try {
-      var query = _supabase
+      var query = supabase
           .from('balance_transactions')
           .select('*')
-          .eq('user_id', _supabase.auth.currentUser!.id);
+          .eq('user_id', supabase.auth.currentUser!.id);
 
       if (transactionType != null && transactionType.isNotEmpty) {
         query = query.eq('transaction_type', transactionType);
@@ -251,7 +251,7 @@ class BalanceService {
     String? category,
   }) async {
     try {
-      final titles = await _supabase
+      final titles = await supabase
           .from('default_balance_titles')
           .select('*')
           .eq('is_active', true)
@@ -324,10 +324,10 @@ class BalanceService {
     String expenseShareId,
   ) async {
     try {
-      final transactions = await _supabase
+      final transactions = await supabase
           .from('balance_transactions')
           .select('*')
-          .eq('user_id', _supabase.auth.currentUser!.id)
+          .eq('user_id', supabase.auth.currentUser!.id)
           .eq('expense_share_id', expenseShareId)
           .order('created_at', ascending: false);
 
@@ -342,10 +342,10 @@ class BalanceService {
     String groupId,
   ) async {
     try {
-      final transactions = await _supabase
+      final transactions = await supabase
           .from('balance_transactions')
           .select('*')
-          .eq('user_id', _supabase.auth.currentUser!.id)
+          .eq('user_id', supabase.auth.currentUser!.id)
           .eq('group_id', groupId)
           .order('created_at', ascending: false);
 
@@ -394,10 +394,10 @@ class BalanceService {
     int limit = 100,
     int offset = 0,
   }) async {
-    final response = await _supabase
+    final response = await supabase
         .from('balance_transactions')
         .select('*, expense_shares(*, expenses(title, group_id), groups(name))')
-        .eq('user_id', _supabase.auth.currentUser!.id)
+        .eq('user_id', supabase.auth.currentUser!.id)
         .order('created_at', ascending: false)
         .limit(limit)
         .range(offset, offset + limit - 1);

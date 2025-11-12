@@ -75,7 +75,10 @@ class DateFilterDialogState extends State<DateFilterDialog> {
       ),
       trailing:
           isSelected
-              ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+              ? Icon(
+                Icons.check_outlined,
+                color: Theme.of(context).colorScheme.primary,
+              )
               : null,
       selected: isSelected,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -131,7 +134,7 @@ class DateFilterDialogState extends State<DateFilterDialog> {
                         );
                         if (date != null) setState(() => _customStart = date);
                       },
-                      icon: const Icon(Icons.calendar_today),
+                      icon: const Icon(Icons.calendar_today_outlined),
                       label: Text(
                         _customStart != null
                             ? DateFormatter.formatDate(_customStart!)
@@ -152,7 +155,7 @@ class DateFilterDialogState extends State<DateFilterDialog> {
                         );
                         if (date != null) setState(() => _customEnd = date);
                       },
-                      icon: const Icon(Icons.calendar_today),
+                      icon: const Icon(Icons.calendar_today_outlined),
                       label: Text(
                         _customEnd != null
                             ? DateFormatter.formatDate(_customEnd!)

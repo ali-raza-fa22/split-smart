@@ -31,8 +31,6 @@ class _AddBalanceDialogState extends State<AddBalanceDialog> {
   // Helper method to convert icon names to IconData
   IconData _getIconData(String iconName) {
     switch (iconName) {
-      case 'work':
-        return Icons.work;
       case 'computer':
         return Icons.computer;
       case 'trending_up':
@@ -48,27 +46,27 @@ class _AddBalanceDialogState extends State<AddBalanceDialog> {
       case 'shopping_cart':
         return Icons.shopping_cart;
       case 'movie':
-        return Icons.movie;
+        return Icons.movie_outlined;
       case 'receipt':
-        return Icons.receipt;
+        return Icons.receipt_outlined;
       case 'local_hospital':
-        return Icons.local_hospital;
+        return Icons.local_hospital_outlined;
       case 'school':
-        return Icons.school;
+        return Icons.school_outlined;
       case 'home':
-        return Icons.home;
+        return Icons.home_outlined;
       case 'flight':
         return Icons.flight;
       case 'sports_esports':
-        return Icons.sports_esports;
+        return Icons.sports_esports_outlined;
       case 'fitness_center':
-        return Icons.fitness_center;
+        return Icons.fitness_center_outlined;
       case 'music_note':
-        return Icons.music_note;
+        return Icons.music_note_outlined;
       case 'book':
-        return Icons.book;
+        return Icons.book_outlined;
       case 'gaming':
-        return Icons.games;
+        return Icons.games_outlined;
       default:
         return Icons.attach_money;
     }
@@ -186,6 +184,7 @@ class _AddBalanceDialogState extends State<AddBalanceDialog> {
                     }
                   },
                 ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(

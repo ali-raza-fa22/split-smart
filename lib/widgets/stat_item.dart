@@ -1,10 +1,10 @@
+import 'package:SPLITSMART/theme/theme.dart';
 import 'package:flutter/material.dart';
 
 class StatItem extends StatelessWidget {
   final String label;
   final String value;
   final IconData? icon;
-  final Color color;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? margin;
   final Widget? avatar;
@@ -14,7 +14,6 @@ class StatItem extends StatelessWidget {
     required this.label,
     required this.value,
     this.icon,
-    required this.color,
     this.onTap,
     this.margin,
     this.avatar,
@@ -29,40 +28,26 @@ class StatItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: margin ?? const EdgeInsets.only(bottom: 10),
+        margin: margin ?? const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-          boxShadow:
-              isTappable
-                  ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                  : null,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            width: 1,
+            color: theme.colorScheme.onSurface.withAlpha(180),
+          ),
         ),
         child: Row(
           children: [
             if (avatar != null) ...[avatar!, const SizedBox(width: 10)],
             if (icon != null) ...[
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 16),
+                child: Icon(icon, color: theme.colorScheme.onSurface, size: 24),
               ),
               const SizedBox(width: 14),
             ] else ...[
               const SizedBox(width: 0),
             ],
-            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,14 +55,14 @@ class StatItem extends StatelessWidget {
                   Text(
                     value,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: color,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     label,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: color.withValues(alpha: 0.8),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -87,7 +72,7 @@ class StatItem extends StatelessWidget {
             if (isTappable)
               Icon(
                 Icons.arrow_forward_ios,
-                color: color.withValues(alpha: 0.6),
+                color: theme.colorScheme.primary,
                 size: 14,
               ),
           ],

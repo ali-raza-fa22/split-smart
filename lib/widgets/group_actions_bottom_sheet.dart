@@ -45,7 +45,10 @@ class GroupActionsBottomSheet extends StatelessWidget {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.delete, color: Colors.red),
+                      leading: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                      ),
                       title: const Text(
                         'Delete Group',
                         style: TextStyle(color: Colors.red),

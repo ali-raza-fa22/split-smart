@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/app_utils.dart';
 import '../services/auth.dart';
 import 'verify_email_screen.dart';
+import '../utils/app_exceptions.dart';
+import '../widgets/error_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
@@ -86,10 +88,12 @@ class _LoginScreenState extends State<LoginScreen> {
             (route) => false,
           );
         }
-      } catch (e) {
-        if (mounted) {
-          String errorMessage = e.toString();
-          if (errorMessage.contains('Email not confirmed')) {
+      } on AppAuthException catch (e) {
+        // If email not confirmed, redirect to verification screen
+        if (e.code == 'EMAIL_NOT_CONFIRMED' ||
+            e.message.toLowerCase().contains('verify') ||
+            e.message.toLowerCase().contains('email')) {
+          if (mounted) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -97,15 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     (context) => VerifyEmailScreen(email: _lastAttemptedEmail!),
               ),
             );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Something bad happened."),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
           }
+        } else {
+          if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
         }
+      } on Exception catch (e) {
+        // Fallback - show friendly message
+        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
@@ -167,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       labelText: 'Email',
                       hintText: 'Enter your email address',
-                      prefixIcon: Icons.email,
+                      prefixIcon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       errorText: _emailError,
                       onChanged: (value) => _clearEmailError(),
@@ -186,11 +188,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      prefixIcon: Icons.lock,
+                      prefixIcon: Icons.lock_outlined,
                       suffixIcon:
                           _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                       onSuffixIconPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
