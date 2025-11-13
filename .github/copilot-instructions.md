@@ -29,6 +29,11 @@ permission_handler: ^12.0.0+1
 
 ## Project Structure
 
+### supabase/table_schema
+
+- see \*.sql files defining database schema and RLS policies, these are already applied in Supabase dashboard and are named accordingly to table names.
+- to update schema create new migration files in `supabase/migrations/{what_you_did}.sql`, then ask to go to supabase dashboard to run migration.
+
 ### `/lib/screens/` - UI Screens
 
 - **Authentication Screens**:
@@ -214,17 +219,24 @@ Stream<void> getDirectMessagesStream()
 - `save_transaction_button.dart` - Save transaction button
 - `stat_item.dart` - Statistics item
 
-## Quick guidance for AI contributors
+## Migrations:
 
-This Flutter app (SPLITSMART) is a Supabase-backed expense-sharing project. Keep guidance short and actionable so an AI agent can be productive immediately.
+see supabase/migrations for DB schema.
 
-Key patterns (refer to these files when making changes):
+## Key patterns (refer to these files when making changes):
 
 - Supabase client singleton: `final supabase = Supabase.instance.client;` (used across `lib/services/*`, e.g. `lib/services/auth.dart`).
 - Service layer lives in `lib/services/` and returns plain Maps/Lists from Supabase queries (e.g. `Future<List<Map<String,dynamic>>>`).
 - UI screens under `lib/screens/` follow StatefulWidget + async load patterns (see `home_screen.dart`, `login_screen.dart`).
 - Reusable helpers in `lib/utils/app_utils.dart` (validation, formatting) — prefer using these utilities.
 - Theme/colors in `lib/theme/theme.dart` — use Theme.of(context) and the app's color tokens.
+- Use outlined icons for example: `icon: Icons.check_circle_outline`,
+- handle errors gracefully and show user-friendly messages,
+- handle offline states where applicable.
+- dont use Loader and block whole screen, use skeletons or inline loading indicators instead.
+- Always check `mounted` before calling `setState()` after async calls.
+- Use `Navigator.of(context).pushNamed(...)` for main screen navigation, and `MaterialPageRoute` for detail screens.
+- use SafeArea and SingleChildScrollView for screens with potential notches.
 
 What to do first when editing code:
 
@@ -267,86 +279,6 @@ Project-specific conventions
 - Keep business logic in `lib/services/*`; UI code in `lib/screens/*`; shared widgets in `lib/widgets/*`.
 - Services should be small, stateless wrappers around Supabase calls and return JSON-like Dart maps/lists. Callers transform into UI models.
 - Real-time behavior: prefer using Streams returned by services (see `chat_service.dart`) and cancel subscriptions in `dispose()`.
-
-Integration points to watch
-
-- Supabase (env vars in `.env`): `SUPABASE_URL`, `SUPABASE_ANON_KEY` (loaded with `flutter_dotenv`).
-- SQL/migrations are under `supabase/` — if schema changes, update SQL and Supabase RLS policies.
-- Storage (avatars) uses Supabase Storage — check bucket policies when image upload fails.
-
-When to ask the repo owner
-
-- Any schema or RLS changes. They must be tested on Supabase dashboard.
-- If a new real-time channel is required (add to `chat_service.dart` patterns).
-
-If you change behavior, add a small manual test note showing how to exercise it (screen, expected data, quick checks).
-
-Short checklist for PRs from AI edits
-
-- Include a 1-line summary and one manual test step in PR description.
-- Reference which service/screen was changed and why.
-- If schema changes, include required SQL and RLS updates (or call out that a migration is needed).
-
-Feedback: tell me which part felt unclear (auth flows, balance rules, or realtime) and I'll expand the section with concrete files/examples.
-
-- `user_id` (UUID, references profiles.id)
-- `current_balance` (numeric, default 0)
-- `total_added` (numeric, default 0)
-- `total_spent` (numeric, default 0)
-- `total_loans` (numeric, default 0)
-- `total_repaid` (numeric, default 0)
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
-
-**balance_transactions**
-
-- `id` (UUID, primary key)
-- `user_id` (UUID, references profiles.id)
-- `transaction_type` (text: 'add', 'spend', 'loan', 'repay')
-- `amount` (numeric)
-- `title` (text)
-- `description` (text, nullable)
-- `expense_share_id` (UUID, nullable, references expense_shares.id)
-- `group_id` (UUID, nullable, references groups.id)
-- `created_at` (timestamp)
-
-**messages** (Direct Messages)
-
-- `id` (UUID, primary key)
-- `sender_id` (UUID, references profiles.id)
-- `receiver_id` (UUID, references profiles.id)
-- `content` (text)
-- `is_read` (boolean, default false)
-- `is_deleted` (boolean, default false)
-- `deleted_for_users` (text[], array of user IDs)
-- `created_at` (timestamp)
-
-**group_messages**
-
-- `id` (UUID, primary key)
-- `group_id` (UUID, references groups.id)
-- `sender_id` (UUID, references profiles.id)
-- `content` (text)
-- `category` (text: 'general', 'expense', 'payment')
-- `expense_data` (jsonb, nullable)
-- `payment_data` (jsonb, nullable)
-- `is_deleted` (boolean, default false)
-- `deleted_for_users` (text[], array of user IDs)
-- `created_at` (timestamp)
-
-**group_message_reads**
-
-- `id` (UUID, primary key)
-- `message_id` (UUID, references group_messages.id)
-- `user_id` (UUID, references profiles.id)
-- `read_at` (timestamp)
-
-**default_balance_titles**
-
-- `id` (UUID, primary key)
-- `title` (text)
-- `category` (text: 'income', 'expense')
-- `is_active` (boolean)
 
 ## Key Features & Workflows
 
