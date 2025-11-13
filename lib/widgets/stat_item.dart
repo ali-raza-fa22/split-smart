@@ -1,4 +1,3 @@
-import 'package:SPLITSMART/theme/theme.dart';
 import 'package:flutter/material.dart';
 
 class StatItem extends StatelessWidget {
