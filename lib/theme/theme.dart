@@ -33,7 +33,7 @@ ThemeData getAppTheme() {
       error: AppColors.error,
       surface: AppColors.background,
       onSurface: AppColors.text,
-      tertiary: AppColors.tertiary,
+      tertiary: const Color.fromARGB(255, 4, 158, 86),
       onTertiary: AppColors.onPrimary,
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(

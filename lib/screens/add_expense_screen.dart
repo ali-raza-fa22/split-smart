@@ -1,8 +1,10 @@
+import 'package:SPLITSMART/utils/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/chat_service.dart';
 import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
+import '../widgets/user_list_item.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String groupId;
@@ -194,7 +196,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _loadMembersError!,
+                      "Error loading group members, please try again.",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
                         fontSize: 12,
@@ -211,30 +213,37 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
               )
               : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Simple group info
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 1,
+                          style: BorderStyle.solid,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             widget.groupName,
                             style: Theme.of(
                               context,
                             ).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -242,9 +251,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 14,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -271,28 +282,87 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    DropdownButtonFormField<String>(
-                      value: _selectedPaidBy,
-                      decoration: const InputDecoration(
-                        labelText: 'Paid by',
-                        border: OutlineInputBorder(),
-                      ),
-                      items:
-                          _members.map((member) {
-                            final profile =
-                                member['profiles'] as Map<String, dynamic>?;
-                            final displayName =
-                                profile?['display_name'] ?? 'Unknown';
-                            return DropdownMenuItem<String>(
-                              value: member['user_id'] as String,
-                              child: Text(displayName),
+                    // Paid by selector using UserListItem in a bottom sheet
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          builder: (context) {
+                            return SafeArea(
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                itemCount: _members.length,
+                                separatorBuilder:
+                                    (c, i) => const Divider(height: 0),
+                                itemBuilder: (context, index) {
+                                  final member = _members[index];
+                                  final profile =
+                                      member['profiles']
+                                          as Map<String, dynamic>?;
+                                  final displayName =
+                                      profile?['display_name'] ?? 'Unknown';
+                                  final avatarUrl =
+                                      profile?['avatar_url'] as String?;
+                                  final userId = member['user_id'] as String;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4.0,
+                                      horizontal: 8.0,
+                                    ),
+                                    child: UserListItem(
+                                      userId: userId,
+                                      name: displayName,
+                                      avatarUrl: avatarUrl,
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedPaidBy = userId;
+                                        });
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
                             );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedPaidBy = value;
-                        });
+                          },
+                        );
                       },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Paid by',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(AppConstants.tagBorderRadius),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Builder(
+                                builder: (context) {
+                                  if (_selectedPaidBy == null) {
+                                    return const Text('Select who paid');
+                                  }
+                                  final selected = _members.firstWhere(
+                                    (m) => m['user_id'] == _selectedPaidBy,
+                                    orElse: () => {},
+                                  );
+                                  final profile =
+                                      (selected['profiles']
+                                          as Map<String, dynamic>?) ??
+                                      {};
+                                  final displayName =
+                                      profile['display_name'] ?? 'Unknown';
+                                  return Text(displayName);
+                                },
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -301,42 +371,43 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       padding: const EdgeInsets.all(8),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiary,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                       child: Row(
-                        spacing: 8,
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                          Text(
-                            'Amount will be split among ${_members.length} members',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onPrimary,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Amount will be split among ${_members.length} members',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Submit button
-                    BrandFilledButton(
-                      text: 'Add Expense',
-                      onPressed: _isLoading ? null : _submitExpense,
-                      isLoading: _isLoading,
-                    ),
                   ],
                 ),
               ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: BrandFilledButton(
+            text: 'Add Expense',
+            onPressed: _isLoading ? null : _submitExpense,
+            isLoading: _isLoading,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:SPLITSMART/screens/home_screen.dart';
-import 'package:SPLITSMART/screens/all_balance_transactions_screen.dart';
+import 'package:SPLITSMART/screens/all_transactions_screen.dart';
 import 'package:SPLITSMART/screens/chat_list_screen.dart';
 import 'package:SPLITSMART/screens/all_expenses_screen.dart';
 
@@ -53,7 +53,7 @@ class MainScaffold extends StatelessWidget {
                   screen = const HomeScreen();
                   break;
                 case 1:
-                  screen = const AllBalanceTransactionsScreen();
+                  screen = const AllTransactionsScreen();
                   break;
                 case 2:
                   screen = const ChatListScreen();

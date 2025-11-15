@@ -1,7 +1,9 @@
+import 'package:SPLITSMART/utils/app_utils.dart';
 import 'package:flutter/material.dart';
+
+import '../services/chat_service.dart';
 import 'csv_export_button.dart';
 import 'user_list_item.dart';
-import '../services/chat_service.dart';
 
 class ExpenseDetailsModal extends StatefulWidget {
   final Map<String, dynamic> expenseData;
@@ -217,7 +219,7 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'Rs ${amount.toStringAsFixed(2)}',
+                AppUtils.formatCurrency(amount),
                 style: TextStyle(
                   color: theme.colorScheme.onPrimary,
                   fontSize: 14,
@@ -363,20 +365,27 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
           const SizedBox(height: 16),
           Column(
             children:
-                members.map((member) {
+                members.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final member = entry.value;
                   final profile = member['profiles'] as Map<String, dynamic>?;
                   final displayName = profile?['display_name'] ?? 'Unknown';
                   final userId = profile?['id'] ?? '';
                   final amount = (member['amount_owed'] as num).toDouble();
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: UserListItem(
-                      userId: userId,
-                      name: displayName,
-                      avatarUrl: profile?['avatar_url'],
-                      amount: 'Rs ${amount.toStringAsFixed(2)}',
-                    ),
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: UserListItem(
+                          userId: userId,
+                          name: displayName,
+                          avatarUrl: profile?['avatar_url'],
+                          amount: AppUtils.formatCurrency(amount),
+                        ),
+                      ),
+                      if (i != members.length - 1) const Divider(height: 1),
+                    ],
                   );
                 }).toList(),
           ),
@@ -386,7 +395,6 @@ class _ExpenseDetailsModalState extends State<ExpenseDetailsModal>
   }
 }
 
-// Helper function to show the expense details modal
 void showExpenseDetailsModal(
   BuildContext context,
   Map<String, dynamic> expenseData, {

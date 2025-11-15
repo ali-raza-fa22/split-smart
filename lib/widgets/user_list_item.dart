@@ -6,6 +6,18 @@ class UserListItem extends StatelessWidget {
   final String name;
   final String? avatarUrl;
   final String? amount;
+  final VoidCallback? onTap;
+
+  /// Optional trailing widget. If provided it overrides [amount] and selection checkbox.
+  final Widget? trailingWidget;
+
+  /// Selection helpers: when [onSelectedChanged] is provided a Checkbox will be
+  /// shown (unless [trailingWidget] is provided). [selected] controls checkbox state.
+  final bool selected;
+  final ValueChanged<bool?>? onSelectedChanged;
+
+  /// Optional subtitle displayed under the user's name (e.g. email or username)
+  final String? subtitle;
 
   const UserListItem({
     super.key,
@@ -13,6 +25,11 @@ class UserListItem extends StatelessWidget {
     required this.name,
     this.avatarUrl,
     this.amount,
+    this.onTap,
+    this.trailingWidget,
+    this.selected = false,
+    this.onSelectedChanged,
+    this.subtitle,
   });
 
   @override
@@ -21,7 +38,7 @@ class UserListItem extends StatelessWidget {
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      onTap: () => {print("Tapped on user: $name")},
+      onTap: onTap ?? () => {print("Tapped on user: $name")},
       leading: AvatarUtils.buildUserAvatar(
         userId,
         name,
@@ -33,16 +50,29 @@ class UserListItem extends StatelessWidget {
         name,
         style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
       ),
-      trailing:
-          amount != null
+      subtitle:
+          subtitle != null
               ? Text(
-                amount!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               )
               : null,
+      trailing:
+          trailingWidget != null
+              ? trailingWidget
+              : (amount != null
+                  ? Text(
+                    amount!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                  : (onSelectedChanged != null
+                      ? Checkbox(value: selected, onChanged: onSelectedChanged)
+                      : null)),
     );
   }
 }

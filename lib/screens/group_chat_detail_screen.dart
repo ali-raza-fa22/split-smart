@@ -1,15 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../services/chat_service.dart';
+import '../utils/avatar_utils.dart';
 import '../utils/date_formatter.dart';
-import '../widgets/expense_details_modal.dart';
 import '../widgets/csv_export_button.dart';
-import 'group_management_screen.dart';
+import '../widgets/expense_details_modal.dart';
+import '../widgets/ui/brand_text_form_field.dart';
 import 'add_expense_screen.dart';
 import 'expenses_screen.dart';
-import '../widgets/ui/brand_text_form_field.dart';
-import '../utils/avatar_utils.dart';
+import 'group_management_screen.dart';
 
 class GroupChatDetailScreen extends StatefulWidget {
   final String groupId;

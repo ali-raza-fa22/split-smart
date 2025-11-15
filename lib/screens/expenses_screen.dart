@@ -1,9 +1,11 @@
+import 'package:SPLITSMART/utils/app_utils.dart';
 import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
+
 import '../services/balance_service.dart';
+import '../services/chat_service.dart';
+import '../utils/avatar_utils.dart';
 import '../widgets/expense_details_modal.dart';
 import '../widgets/stat_item.dart';
-import '../utils/avatar_utils.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String groupId;
@@ -97,7 +99,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('You need to pay Rs ${amountOwed.toStringAsFixed(2)}'),
+                    Text(
+                      'You need to pay ${AppUtils.formatCurrency(amountOwed)}',
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Your current balance: Rs ${(currentBalance < 0 ? 0.0 : currentBalance).toStringAsFixed(2)}',
@@ -158,15 +162,15 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         String message;
         if (paymentResult['payment_method'] == 'balance') {
           message =
-              'Paid from balance! Remaining balance: Rs ${paymentResult['remaining_balance'].toStringAsFixed(2)}';
+              'Paid from balance! Remaining balance: ${AppUtils.formatCurrency(paymentResult['remaining_balance'])}';
         } else if (paymentResult['payment_method'] == 'mixed') {
           final fromBalance = paymentResult['amount_paid_from_balance'];
           final fromLoan = paymentResult['amount_paid_from_loan'];
           message =
-              'Paid Rs ${fromBalance.toStringAsFixed(2)} from balance and Rs ${fromLoan.toStringAsFixed(2)} from loan';
+              'Paid ${AppUtils.formatCurrency(fromBalance)} from balance and ${AppUtils.formatCurrency(fromLoan)} from loan';
         } else {
           message =
-              'Paid from loan! Outstanding loan: Rs ${paymentResult['amount_paid_from_loan'].toStringAsFixed(2)}';
+              'Paid from loan! Outstanding loan: ${AppUtils.formatCurrency(paymentResult['amount_paid_from_loan'])}';
         }
 
         ScaffoldMessenger.of(
@@ -989,7 +993,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -1203,9 +1209,8 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withValues(
-                            alpha: 0.3,
-                          ),
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: (isPaid

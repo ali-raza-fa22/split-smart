@@ -225,7 +225,7 @@ see supabase/migrations for DB schema.
 
 ## Key patterns (refer to these files when making changes):
 
-- Supabase client singleton: `final supabase = Supabase.instance.client;` (used across `lib/services/*`, e.g. `lib/services/auth.dart`).
+- Supabase client singleton: use lib/utils/supabase.dart for supabase client access.
 - Service layer lives in `lib/services/` and returns plain Maps/Lists from Supabase queries (e.g. `Future<List<Map<String,dynamic>>>`).
 - UI screens under `lib/screens/` follow StatefulWidget + async load patterns (see `home_screen.dart`, `login_screen.dart`).
 - Reusable helpers in `lib/utils/app_utils.dart` (validation, formatting) — prefer using these utilities.

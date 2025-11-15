@@ -38,16 +38,19 @@ class ExpenseListItem extends StatelessWidget {
         if (showDivider) const Divider(height: 0),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 10,
+            horizontal: 12,
+            vertical: 8,
           ),
           onTap: onTap,
           leading: CircleAvatar(
-            backgroundColor:
-                isPaid ? theme.colorScheme.tertiary : theme.colorScheme.primary,
+            backgroundColor: theme.colorScheme.surface,
             child: Icon(
-              isPaid ? Icons.check_outlined : Icons.receipt_outlined,
-              color: Colors.white,
+              size: 28,
+              isPaid ? Icons.check_outlined : Icons.watch_later_outlined,
+              color:
+                  isPaid
+                      ? theme.colorScheme.tertiary
+                      : theme.colorScheme.primary,
             ),
           ),
           title: Column(
@@ -62,25 +65,20 @@ class ExpenseListItem extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     DateFormatter.formatDate(createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurface,
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                AppUtils.formatCurrency(amount),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
+              Text(AppUtils.formatCurrency(amount)),
               const SizedBox(height: 2),
               Text(
                 'Group: $groupName',

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../widgets/save_transaction_button.dart';
 import '../widgets/transaction_details_card.dart';
 
-class BalanceTransactionDetailScreen extends StatelessWidget {
+class TransactionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> transaction;
 
-  const BalanceTransactionDetailScreen({super.key, required this.transaction});
+  const TransactionDetailScreen({super.key, required this.transaction});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +17,7 @@ class BalanceTransactionDetailScreen extends StatelessWidget {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(12.0),
                 child: BalanceTransactionDetailCard(transaction: transaction),
               ),
             ),

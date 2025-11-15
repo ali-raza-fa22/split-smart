@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:SPLITSMART/utils/app_utils.dart';
 import 'package:SPLITSMART/utils/constants.dart';
+import 'package:flutter/material.dart';
+
 import '../utils/date_formatter.dart';
 
 class BalanceTransactionDetailCard extends StatelessWidget {
@@ -20,28 +22,27 @@ class BalanceTransactionDetailCard extends StatelessWidget {
     final id = tx['id']?.toString();
 
     // Icon and color for type
-    IconData icon;
-    Color color;
-    switch (type) {
-      case 'add':
-        icon = Icons.add_circle_outline;
-        color = Colors.green;
-        break;
-      case 'spend':
-        icon = Icons.remove_circle_outline;
-        color = Colors.red;
-        break;
-      case 'loan':
-        icon = Icons.credit_card;
-        color = theme.colorScheme.error;
-        break;
-      case 'repay':
-        icon = Icons.check_circle_outline;
-        color = Colors.blue;
-        break;
-      default:
-        icon = Icons.swap_horiz;
-        color = theme.colorScheme.primary;
+    Color _colorForType(BuildContext context, String type) {
+      switch (type) {
+        case 'add':
+          return Theme.of(context).colorScheme.tertiary;
+        case 'spend':
+          return Colors.red;
+        default:
+          return Colors.red;
+      }
+    }
+
+    IconData _iconForType(String type) {
+      switch (type) {
+        case 'add':
+          return Icons.south_west;
+        case 'spend':
+          return Icons.north_east;
+        default:
+          // Treat unknown types as 'spend' visually
+          return Icons.north_east;
+      }
     }
 
     return Column(
@@ -58,14 +59,18 @@ class BalanceTransactionDetailCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: color.withValues(alpha: 0.1),
-                  child: Icon(icon, color: color, size: 32),
+                  backgroundColor: _colorForType(context, type!),
+                  child: Icon(
+                    _iconForType(type),
+                    color: theme.colorScheme.onPrimary,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Rs ${amount.toStringAsFixed(2)}',
+                  AppUtils.formatCurrency(amount),
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    color: color,
+                    color: _colorForType(context, type),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -73,7 +78,7 @@ class BalanceTransactionDetailCard extends StatelessWidget {
                 Text(
                   AppConstants.getTransactionTypeLabel(type),
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: color,
+                    color: _colorForType(context, type),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

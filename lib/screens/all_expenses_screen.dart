@@ -1,3 +1,4 @@
+import 'package:SPLITSMART/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/balance_service.dart';
@@ -90,10 +91,12 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('You need to pay Rs ${amountOwed.toStringAsFixed(2)}'),
+                    Text(
+                      'You need to pay ${AppUtils.formatCurrency(amountOwed)}',
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      'Your current balance: Rs ${(currentBalance < 0 ? 0.0 : currentBalance).toStringAsFixed(2)}',
+                      'Your current balance: ${AppUtils.formatCurrency(currentBalance < 0 ? 0.0 : currentBalance)}',
                     ),
                     const SizedBox(height: 16),
                     const Text(
@@ -148,15 +151,15 @@ class _AllExpensesScreenState extends State<AllExpensesScreen>
         String message;
         if (paymentResult['payment_method'] == 'balance') {
           message =
-              'Paid from balance! Remaining balance: Rs ${paymentResult['remaining_balance'].toStringAsFixed(2)}';
+              'Paid expense! Remaining balance: ${AppUtils.formatCurrency(paymentResult['remaining_balance'])}';
         } else if (paymentResult['payment_method'] == 'mixed') {
           final fromBalance = paymentResult['amount_paid_from_balance'];
           final fromLoan = paymentResult['amount_paid_from_loan'];
           message =
-              'Paid Rs ${fromBalance.toStringAsFixed(2)} from balance and Rs ${fromLoan.toStringAsFixed(2)} from loan';
+              'Paid Rs ${AppUtils.formatCurrency(fromBalance)} from balance and ${AppUtils.formatCurrency(fromLoan)} from loan';
         } else {
           message =
-              'Paid from loan! Outstanding loan: Rs ${paymentResult['amount_paid_from_loan'].toStringAsFixed(2)}';
+              'Paid from loan! Outstanding loan: ${AppUtils.formatCurrency(paymentResult['amount_paid_from_loan'])}';
         }
 
         ScaffoldMessenger.of(context).showSnackBar(

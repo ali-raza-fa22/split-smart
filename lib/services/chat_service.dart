@@ -1696,9 +1696,7 @@ class ChatService {
           .select('id')
           .eq('group_id', groupId);
 
-      if (response is List) {
-        return response.length;
-      }
+      return response.length;
       return 0;
     } catch (e) {
       // Rethrow the error to be handled by the caller
@@ -1949,9 +1947,7 @@ class ChatService {
               .limit(1)
               .single();
 
-      if (response != null) {
-        return DateTime.parse(response['created_at']);
-      }
+      return DateTime.parse(response['created_at']);
       return null;
     } catch (e) {
       return null;

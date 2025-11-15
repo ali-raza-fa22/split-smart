@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../services/auth.dart';
+import '../utils/avatar_utils.dart';
+import '../widgets/ui/brand_filled_button.dart';
+import 'all_expenses_screen.dart';
+import 'all_transactions_screen.dart';
 import 'edit_profile_screen.dart';
 import 'stats_screen.dart';
-import 'all_expenses_screen.dart';
-import 'all_balance_transactions_screen.dart';
-import '../widgets/ui/brand_filled_button.dart';
-import '../utils/avatar_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -201,8 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => const AllBalanceTransactionsScreen(),
+                          builder: (context) => const AllTransactionsScreen(),
                         ),
                       );
                     },

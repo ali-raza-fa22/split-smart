@@ -1,6 +1,8 @@
+import 'package:SPLITSMART/utils/app_constants.dart';
 import 'package:flutter/material.dart';
-import 'brand_button_2.dart';
+
 import '../services/transaction_export_service.dart';
+import 'brand_button_2.dart';
 
 class SaveTransactionButton extends StatelessWidget {
   final Map<String, dynamic> transaction;
@@ -31,17 +33,14 @@ class SaveTransactionButton extends StatelessWidget {
         style: IconButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.tertiary,
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppConstants.tagBorderRadius),
           ),
         ),
       );
     }
 
     return BrandButton2(
+      width: !isCompact ? double.infinity : 40,
       label: customLabel ?? 'Save Transaction',
       icon: customIcon ?? Icons.save_alt_outlined,
       isActive: true,
@@ -133,7 +132,7 @@ class SaveTransactionButton extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: const Text('Close'),
                 ),
               ],
             ),

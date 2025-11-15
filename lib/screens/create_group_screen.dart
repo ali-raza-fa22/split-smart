@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
-import '../widgets/ui/brand_text_form_field.dart';
 import '../widgets/ui/brand_filled_button.dart';
-import '../utils/avatar_utils.dart';
+import '../widgets/ui/brand_text_form_field.dart';
+import '../widgets/user_list_item.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -72,13 +73,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   Future<void> _searchUsers(String query) async {
-    if (query.isEmpty) {
+    final trimmed = query.trim();
+    // Only search when user has entered more than 2 characters.
+    if (trimmed.length <= 2) {
       setState(() {
         _allUsers = [];
         _isSearching = false;
       });
       return;
     }
+
     setState(() {
       _isSearching = true;
     });
@@ -277,6 +281,39 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       child:
                           _isSearching
                               ? const Center(child: CircularProgressIndicator())
+                              : (_searchQuery.trim().length <= 2)
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off,
+                                      size: 64,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Type at least 3 characters to search users',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Try a name or email (3+ characters)',
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              )
                               : filteredUsers.isEmpty
                               ? Center(
                                 child: Column(
@@ -328,29 +365,19 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                       _selectedUserIds.length <
                                       AppConstants.maxMembersAllowed;
 
-                                  return CheckboxListTile(
-                                    title: Text(
+                                  final displayName =
                                       user['display_name'] ??
-                                          user['username'] ??
-                                          user['email'] ??
-                                          '',
-                                    ),
-                                    subtitle: Text(
-                                      user['username'] ?? user['email'] ?? '',
-                                    ),
-                                    value: isSelected,
-                                    secondary: AvatarUtils.buildUserAvatar(
-                                      user['id'],
-                                      user['display_name'] ??
-                                          user['username'] ??
-                                          user['email'] ??
-                                          '',
-                                      Theme.of(context),
-                                      avatarUrl: user['avatar_url'],
-                                      radius: 20,
-                                      fontSize: 16,
-                                    ),
-                                    onChanged:
+                                      user['username'] ??
+                                      '';
+                                  final username = user['username'] ?? '';
+                                  return UserListItem(
+                                    userId: user['id'],
+                                    name: displayName,
+                                    avatarUrl: user['avatar_url'],
+                                    subtitle: username,
+                                    // show a checkbox for selection; disable if max reached
+                                    selected: isSelected,
+                                    onSelectedChanged:
                                         !isSelected && !canSelectMore
                                             ? null
                                             : (bool? selected) {
@@ -359,6 +386,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                                 user['id'],
                                               );
                                             },
+                                    onTap: () {
+                                      if (!isSelected && !canSelectMore) return;
+                                      _onUserSelected(!isSelected, user['id']);
+                                    },
                                   );
                                 },
                               ),

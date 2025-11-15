@@ -1,24 +1,23 @@
-import 'package:flutter/material.dart';
+import 'package:SPLITSMART/utils/app_utils.dart';
 import 'package:SPLITSMART/widgets/brand_button_2.dart';
 import 'package:SPLITSMART/widgets/categoryfilter_dialog.dart';
 import 'package:SPLITSMART/widgets/datefilter_dialog.dart';
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
+import 'package:flutter/material.dart';
+
 import '../services/balance_service.dart';
 import '../utils/date_formatter.dart';
-import 'balance_transaction_detail_screen.dart';
 import '../widgets/save_transaction_button.dart';
-import '../widgets/pie_chart_widget.dart';
-import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
+import 'transaction_detail_screen.dart';
 
-class AllBalanceTransactionsScreen extends StatefulWidget {
-  const AllBalanceTransactionsScreen({super.key});
+class AllTransactionsScreen extends StatefulWidget {
+  const AllTransactionsScreen({super.key});
 
   @override
-  State<AllBalanceTransactionsScreen> createState() =>
-      _AllBalanceTransactionsScreenState();
+  State<AllTransactionsScreen> createState() => _AllTransactionsScreenState();
 }
 
-class _AllBalanceTransactionsScreenState
-    extends State<AllBalanceTransactionsScreen>
+class _AllTransactionsScreenState extends State<AllTransactionsScreen>
     with SingleTickerProviderStateMixin {
   final BalanceService _balanceService = BalanceService();
   List<Map<String, dynamic>> _transactions = [];
@@ -54,11 +53,22 @@ class _AllBalanceTransactionsScreenState
     });
     try {
       final txs = await _balanceService.getTransactionHistory();
+      // Normalize transaction types: only keep 'add' and 'spend'.
+      // Any non-'add' type is treated as 'spend' to safely remove other types.
+      final normalized =
+          txs.map((tx) {
+            final t = Map<String, dynamic>.from(tx);
+            final type = (t['transaction_type'] as String?) ?? 'spend';
+            t['transaction_type'] = type == 'add' ? 'add' : 'spend';
+            return t;
+          }).toList();
+
       setState(() {
-        _transactions = txs;
-        _filteredTransactions = txs;
+        _transactions = normalized;
+        _filteredTransactions = normalized;
         _isLoading = false;
       });
+
       _applyFilters();
     } catch (e) {
       setState(() {
@@ -109,25 +119,14 @@ class _AllBalanceTransactionsScreenState
       }
     }
 
-    // Apply direction filter
+    // Apply direction filter. Since we only support 'add' and 'spend',
+    // received => 'add', sent => 'spend'.
     if (_selectedDirection == 'received') {
       filtered =
-          filtered
-              .where(
-                (tx) =>
-                    tx['transaction_type'] == 'add' ||
-                    tx['transaction_type'] == 'repay',
-              )
-              .toList();
+          filtered.where((tx) => tx['transaction_type'] == 'add').toList();
     } else if (_selectedDirection == 'sent') {
       filtered =
-          filtered
-              .where(
-                (tx) =>
-                    tx['transaction_type'] == 'spend' ||
-                    tx['transaction_type'] == 'loan',
-              )
-              .toList();
+          filtered.where((tx) => tx['transaction_type'] == 'spend').toList();
     } else {
       // Apply category filter only if direction is 'all'
       if (_selectedCategoryFilter != 'all') {
@@ -232,15 +231,12 @@ class _AllBalanceTransactionsScreenState
   IconData _iconForType(String type) {
     switch (type) {
       case 'add':
-        return Icons.add_circle_outline;
+        return Icons.south_west;
       case 'spend':
-        return Icons.remove_circle_outline;
-      case 'loan':
-        return Icons.credit_card_outlined;
-      case 'repay':
-        return Icons.check_circle_outline;
+        return Icons.north_east;
       default:
-        return Icons.swap_horiz_outlined;
+        // Treat unknown types as 'spend' visually
+        return Icons.north_east;
     }
   }
 
@@ -250,25 +246,16 @@ class _AllBalanceTransactionsScreenState
         return Theme.of(context).colorScheme.tertiary;
       case 'spend':
         return Colors.red;
-      case 'loan':
-        return Theme.of(context).colorScheme.error;
-      case 'repay':
-        return Colors.blue;
       default:
-        return Theme.of(context).colorScheme.primary;
+        return Colors.red;
     }
   }
 
   List<Map<String, dynamic>> _getTabFilteredTransactions(int tabIndex) {
     if (tabIndex == 1) {
-      // Spendings: spend, loan, repay - show all without filters
+      // Spendings: only 'spend' transactions
       return _transactions
-          .where(
-            (tx) =>
-                tx['transaction_type'] == 'spend' ||
-                tx['transaction_type'] == 'loan' ||
-                tx['transaction_type'] == 'repay',
-          )
+          .where((tx) => tx['transaction_type'] == 'spend')
           .toList();
     }
     // All Payments: use filtered transactions
@@ -321,60 +308,6 @@ class _AllBalanceTransactionsScreenState
     return parts.join(' • ');
   }
 
-  Widget _buildSpendingCategoryChart(
-    BuildContext context,
-    List<Map<String, dynamic>> spendings,
-    ThemeData theme,
-  ) {
-    // Group by transaction_type and sum amounts
-    final Map<String, double> categoryTotals = {};
-    for (final tx in spendings) {
-      final type = tx['transaction_type'] as String? ?? 'spend';
-      final amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
-      categoryTotals[type] = (categoryTotals[type] ?? 0) + amount;
-    }
-
-    // Define color/icon for each type
-    final Map<String, Color> typeColors = {
-      'spend': Colors.red,
-      'loan': theme.colorScheme.error,
-      'repay': Colors.blue,
-    };
-    final Map<String, IconData> typeIcons = {
-      'spend': Icons.remove_circle_outline,
-      'loan': Icons.credit_card_outlined,
-      'repay': Icons.check_circle_outline,
-    };
-    final Map<String, String> typeLabels = {
-      'spend': 'Spend',
-      'loan': 'Loan',
-      'repay': 'Repay',
-    };
-
-    final chartData =
-        categoryTotals.entries
-            .where((e) => e.value > 0)
-            .map(
-              (e) => ChartDataItem(
-                label: typeLabels[e.key] ?? e.key,
-                value: e.value,
-                color: typeColors[e.key] ?? theme.colorScheme.primary,
-                icon: typeIcons[e.key],
-              ),
-            )
-            .toList();
-
-    return PieChartWidget(
-      data: chartData,
-      title: 'Spending by Category',
-      subtitle: 'How your spending is distributed',
-      size: 160,
-      showLegend: true,
-      showCenterText: true,
-      centerText: 'Total',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -395,21 +328,22 @@ class _AllBalanceTransactionsScreenState
           if (filterSummary.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               color: theme.colorScheme.tertiary,
               child: Row(
                 children: [
                   Icon(
-                    Icons.filter_list_outlined,
+                    Icons.filter_list,
                     size: 16,
-                    color: theme.colorScheme.onPrimary,
+                    color: theme.colorScheme.onTertiary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       filterSummary,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimary,
+                        color: theme.colorScheme.onTertiary,
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -458,10 +392,10 @@ class _AllBalanceTransactionsScreenState
                             style: theme.textTheme.titleMedium,
                           ),
                           if (filterSummary.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            TextButton(
+                            FilledButton.icon(
                               onPressed: _clearFilters,
-                              child: const Text('Clear Filters'),
+                              icon: const Icon(Icons.clear),
+                              label: const Text('Clear Filters'),
                             ),
                           ],
                         ],
@@ -479,7 +413,9 @@ class _AllBalanceTransactionsScreenState
                             // Filter buttons - only show on All Payments tab
                             if (tabIndex == 0)
                               Container(
-                                padding: const EdgeInsets.all(16),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
@@ -559,7 +495,6 @@ class _AllBalanceTransactionsScreenState
                                                   ? 1
                                                   : 0),
                                           itemBuilder: (context, i) {
-                                            // Show pie chart as first item in spending tab
                                             if (tabIndex == 1 &&
                                                 tabFiltered.isNotEmpty &&
                                                 i == 0) {
@@ -567,12 +502,7 @@ class _AllBalanceTransactionsScreenState
                                                 padding: const EdgeInsets.all(
                                                   16,
                                                 ),
-                                                child:
-                                                    _buildSpendingCategoryChart(
-                                                      context,
-                                                      tabFiltered,
-                                                      theme,
-                                                    ),
+                                                // child: Text("ali"),
                                               );
                                             }
 
@@ -603,8 +533,8 @@ class _AllBalanceTransactionsScreenState
                                                 ListTile(
                                                   contentPadding:
                                                       const EdgeInsets.symmetric(
-                                                        horizontal: 16,
-                                                        vertical: 10,
+                                                        horizontal: 8,
+                                                        vertical: 6,
                                                       ),
                                                   leading: Icon(
                                                     _iconForType(type),
@@ -612,7 +542,7 @@ class _AllBalanceTransactionsScreenState
                                                       context,
                                                       type,
                                                     ),
-                                                    size: 32,
+                                                    size: 28,
                                                   ),
                                                   title: Column(
                                                     crossAxisAlignment:
@@ -620,34 +550,24 @@ class _AllBalanceTransactionsScreenState
                                                             .start,
                                                     children: [
                                                       Text(
-                                                        DateFormatter.formatFullDateTime(
-                                                          date,
-                                                        ),
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.grey,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
                                                         title,
                                                         style: const TextStyle(
                                                           fontWeight:
                                                               FontWeight.w600,
                                                           fontSize: 16,
                                                         ),
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
                                                       ),
                                                       const SizedBox(height: 4),
                                                       Text(
-                                                        'Rs ${amount.toStringAsFixed(2)}',
+                                                        AppUtils.formatCurrency(
+                                                          amount,
+                                                        ),
                                                         style: TextStyle(
-                                                          color: _colorForType(
-                                                            context,
-                                                            type,
-                                                          ),
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 18,
+                                                          fontSize: 14,
                                                         ),
                                                       ),
                                                       const SizedBox(height: 2),
@@ -660,6 +580,15 @@ class _AllBalanceTransactionsScreenState
                                                             context,
                                                             type,
                                                           ),
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        DateFormatter.formatFullDateTime(
+                                                          date,
+                                                        ),
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
                                                         ),
                                                       ),
                                                     ],
@@ -675,7 +604,7 @@ class _AllBalanceTransactionsScreenState
                                                       MaterialPageRoute(
                                                         builder:
                                                             (context) =>
-                                                                BalanceTransactionDetailScreen(
+                                                                TransactionDetailScreen(
                                                                   transaction:
                                                                       tx,
                                                                 ),

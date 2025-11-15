@@ -1,15 +1,17 @@
-import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
-import '../services/auth.dart';
-import 'chat_detail_screen.dart';
-import 'create_group_screen.dart';
-import 'group_chat_detail_screen.dart';
 import 'dart:async';
-import 'verify_email_screen.dart';
+
+import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
+import 'package:flutter/material.dart';
+
+import '../services/auth.dart';
+import '../services/chat_service.dart';
 import '../widgets/chat_list_item.dart';
 import '../widgets/empty_chat_state.dart';
 import '../widgets/group_actions_bottom_sheet.dart';
-import 'package:SPLITSMART/widgets/ui/main_scaffold.dart';
+import 'chat_detail_screen.dart';
+import 'create_group_screen.dart';
+import 'group_chat_detail_screen.dart';
+import 'verify_email_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});

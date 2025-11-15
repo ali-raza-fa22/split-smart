@@ -6,46 +6,17 @@ class AvatarUtils {
     // Create a hash from the user ID to get consistent colors
     final hash = userId.hashCode;
     final colors = [
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.secondary,
-      ], // Primary to Secondary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.primary,
-      ], // Tertiary to Primary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.tertiary,
-      ], // Secondary to Tertiary
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.primary.withValues(alpha: 0.6),
-      ], // Primary variants
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.secondary.withValues(alpha: 0.6),
-      ], // Secondary variants
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.tertiary.withValues(alpha: 0.6),
-      ], // Tertiary variants
-      [
-        theme.colorScheme.primary,
-        theme.colorScheme.tertiary,
-      ], // Primary to Tertiary
-      [
-        theme.colorScheme.secondary,
-        theme.colorScheme.primary,
-      ], // Secondary to Primary
-      [
-        theme.colorScheme.tertiary,
-        theme.colorScheme.secondary,
-      ], // Tertiary to Secondary
-      [
-        theme.colorScheme.primary.withValues(alpha: 0.6),
-        theme.colorScheme.secondary.withValues(alpha: 0.6),
-      ], // Muted variants
+      [Colors.purple, Colors.pink], // Purple to Pink
+      [Colors.purple, Colors.indigo], // Purple to Indigo
+      [Colors.cyan, Colors.blue], // Cyan to Blue
+      [Colors.teal, Colors.green], // Teal to Green
+      [Colors.blue, Colors.cyan], // Blue to Cyan
+      [Colors.green, Colors.blue], // Green to Blue
+      [Colors.orange, Colors.yellow], // Orange to Yellow
+      [Colors.pink, Colors.purple], // Pink to Purple
+      [Colors.blue, Colors.green], // Blue to Green
+      [Colors.red, Colors.orange], // Red to Orange
+      [Colors.red, Colors.pink], // Red to Pink
     ];
 
     // Use the hash to select a consistent gradient for each user
@@ -59,15 +30,15 @@ class AvatarUtils {
     final hash = groupName.hashCode;
     final colors = [
       [Colors.purple, Colors.pink], // Purple to Pink
-      [Colors.blue, Colors.cyan], // Blue to Cyan
       [Colors.green, Colors.teal], // Green to Teal
       [Colors.orange, Colors.red], // Orange to Red
       [Colors.indigo, Colors.purple], // Indigo to Purple
-      [Colors.teal, Colors.green], // Teal to Green
       [Colors.pink, Colors.orange], // Pink to Orange
-      [Colors.cyan, Colors.blue], // Cyan to Blue
       [Colors.red, Colors.pink], // Red to Pink
       [Colors.purple, Colors.indigo], // Purple to Indigo
+      [Colors.cyan, Colors.blue], // Cyan to Blue
+      [Colors.teal, Colors.green], // Teal to Green
+      [Colors.blue, Colors.cyan], // Blue to Cyan
       [Colors.green, Colors.blue], // Green to Blue
       [Colors.orange, Colors.yellow], // Orange to Yellow
       [Colors.pink, Colors.purple], // Pink to Purple

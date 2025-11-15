@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
-import '../utils/date_formatter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
-import '../widgets/ui/brand_text_form_field.dart';
+
+import 'package:SPLITSMART/utils/supabase.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../services/chat_service.dart';
 import '../utils/avatar_utils.dart';
+import '../utils/date_formatter.dart';
+import '../widgets/ui/brand_text_form_field.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String otherUserId;
@@ -32,6 +35,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final Set<String> _locallyDeletedMessageIds = {};
   StreamSubscription? _messagesSubscription;
   DateTime? _lastReadTimestamp;
+
+  final supabase = SupabaseManager.client;
 
   @override
   void initState() {
@@ -87,6 +92,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Something bad happened')));
+
         setState(() {
           _isLoading = false;
         });
@@ -134,7 +143,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   // Group messages by day
   List<Map<String, dynamic>> _getGroupedMessages() {
     final groupedMessages = <Map<String, dynamic>>[];
-    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final currentUserId = supabase.auth.currentUser!.id;
 
     DateTime? currentDay;
     bool unreadDividerAdded = false;
@@ -284,6 +293,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
     final deleteOption = await showDialog<String>(
       context: context,
+      useRootNavigator: true,
       builder:
           (context) => AlertDialog(
             title: Text(
@@ -336,7 +346,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final currentUserId = supabase.auth.currentUser!.id;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -425,7 +435,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                   children: [
                                     if (!isMe && showAvatar) ...[
                                       CircleAvatar(
-                                        radius: 16,
+                                        radius: 12,
                                         backgroundColor:
                                             theme.colorScheme.primary,
                                         child: Text(
@@ -463,15 +473,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                           decoration: BoxDecoration(
                                             color:
                                                 isSelected
-                                                    ? theme
-                                                        .colorScheme
-                                                        .secondary
-                                                        .withValues(alpha: 0.4)
+                                                    ? theme.colorScheme.tertiary
+                                                        .withAlpha(250)
                                                     : isMe
-                                                    ? theme.colorScheme.primary
+                                                    ? theme.colorScheme.tertiary
+                                                        .withAlpha(190)
                                                     : theme
                                                         .colorScheme
-                                                        .surfaceVariant,
+                                                        .surfaceContainerHighest,
                                             borderRadius: BorderRadius.only(
                                               topLeft: const Radius.circular(
                                                 20,
