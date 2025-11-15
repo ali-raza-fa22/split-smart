@@ -421,15 +421,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             rawUsername,
                           );
 
-                          await _supabase
-                              .from('profiles')
-                              .update({
-                                'username': usernameToSave,
-                                'display_name':
-                                    _displayNameController.text.trim(),
-                                'avatar_url': avatarUrl,
-                              })
-                              .eq('id', userId);
+                          await _authService.updaterofile(
+                            username: usernameToSave,
+                            displayName: _displayNameController.text.trim(),
+                            avatarUrl: avatarUrl,
+                          );
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

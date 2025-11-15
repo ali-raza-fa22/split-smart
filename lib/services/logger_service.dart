@@ -21,7 +21,6 @@ class LoggerService {
       if (error != null) print('[ERROR_DETAILS] $error');
       if (stackTrace != null) print('[STACK_TRACE] $stackTrace');
     }
-    // TODO: Wire to Crashlytics or Sentry in production
   }
 
   void warning(String message, {Map<String, dynamic>? data}) {

@@ -1,7 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
-import '../screens/verify_email_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../screens/verify_email_screen.dart';
 import '../utils/app_exceptions.dart';
 import 'error_handler_service.dart';
 import 'logger_service.dart';
@@ -164,7 +164,7 @@ class AuthService {
   }
 
   // Update user profile
-  Future<void> updateProfile({
+  Future<void> updaterofile({
     String? username,
     String? displayName,
     String? avatarUrl,
@@ -187,43 +187,6 @@ class AuthService {
       if (e is AppException) rethrow;
       _logger.error('updateProfile failed', error: e, stackTrace: st);
       throw _errorHandler.handleError(e, context: 'AuthService.updateProfile');
-    }
-  }
-
-  // Update user email
-  Future<void> updateEmail(String newEmail) async {
-    try {
-      await supabase.auth.updateUser(UserAttributes(email: newEmail));
-    } catch (e, st) {
-      if (e is AppException) rethrow;
-      _logger.error('updateEmail failed', error: e, stackTrace: st);
-      throw _errorHandler.handleError(e, context: 'AuthService.updateEmail');
-    }
-  }
-
-  // Update user password
-  Future<void> updatePassword(String newPassword) async {
-    try {
-      await supabase.auth.updateUser(UserAttributes(password: newPassword));
-    } catch (e, st) {
-      if (e is AppException) rethrow;
-      _logger.error('updatePassword failed', error: e, stackTrace: st);
-      throw _errorHandler.handleError(e, context: 'AuthService.updatePassword');
-    }
-  }
-
-  // Get email confirmation status
-  Future<bool> checkEmailConfirmation() async {
-    try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return false;
-
-      // Refresh the user data
-      await supabase.auth.refreshSession();
-      return supabase.auth.currentUser?.emailConfirmedAt != null;
-    } catch (e, st) {
-      _logger.error('checkEmailConfirmation failed', error: e, stackTrace: st);
-      return false;
     }
   }
 

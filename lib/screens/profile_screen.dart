@@ -70,21 +70,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding: EdgeInsets.all(12),
                 child: Card(
-                  elevation: 4,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(14),
@@ -101,11 +92,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _profile?['display_name'],
-                            style: Theme.of(
-                              context,
-                            ).textTheme.headlineSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                            style: TextStyle(
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -116,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ).textTheme.bodyLarge?.copyWith(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.onPrimary.withValues(alpha: 0.8),
+                              ).colorScheme.onSurface.withAlpha(200),
                             ),
                           ),
                         ],
@@ -262,7 +252,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 40),
             ],
           ),
         ),
