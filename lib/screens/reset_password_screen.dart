@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/auth.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -72,7 +73,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage),
+              content: Text("Something bad happened"),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );

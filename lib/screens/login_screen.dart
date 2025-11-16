@@ -103,11 +103,9 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
         } else {
-          if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
+          if (mounted)
+            ErrorDisplay.showErrorSnackBar(context, "Something bad happened");
         }
-      } on Exception catch (e) {
-        // Fallback - show friendly message
-        if (mounted) ErrorDisplay.showErrorSnackBar(context, e);
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
